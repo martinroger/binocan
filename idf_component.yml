@@ -1,0 +1,11 @@
+version: "0.1.0"
+description: "Binocan CAN protocol bindings and DBC definitions for ESP-IDF"
+url: "https://github.com/martinroger/binocan"
+repository: "https://github.com/martinroger/binocan.git"
+license: "MIT"
+targets:
+  - all
+files:
+  use_gitignore: true
+dependencies:
+  idf: ">=5.5.5"

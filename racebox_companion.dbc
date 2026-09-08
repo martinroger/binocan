@@ -1,0 +1,89 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: RaceBoxCompanion Vector__XXX
+
+BO_ 1536 RB_SPEED_HEADING: 8 RaceBoxCompanion
+ SG_ Speed : 0|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ Heading : 16|16@1+ (0.01,0) [0|359.99] "deg" Vector__XXX
+ SG_ SpeedAccuracy : 32|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ FixStatus : 48|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ValidFix : 52|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ ValidHeading : 53|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ NumSVs : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1537 RB_LAT_LON: 8 RaceBoxCompanion
+ SG_ Latitude : 0|32@1- (0.0000001,0) [-90|90] "deg" Vector__XXX
+ SG_ Longitude : 32|32@1- (0.0000001,0) [-180|180] "deg" Vector__XXX
+
+BO_ 1538 RB_ALT_ACCURACY: 8 RaceBoxCompanion
+ SG_ MSL_Altitude : 0|32@1- (0.001,0) [-1000|20000] "m" Vector__XXX
+ SG_ HorizontalAccuracy : 32|16@1+ (0.01,0) [0|655.35] "m" Vector__XXX
+ SG_ PDOP : 48|16@1+ (0.01,0) [0|655.35] "" Vector__XXX
+
+BO_ 1539 RB_IMU_ACCEL: 8 RaceBoxCompanion
+ SG_ G_Force_X : 0|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ G_Force_Y : 16|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ G_Force_Z : 32|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ BatteryPercent : 48|7@1+ (1,0) [0|100] "%" Vector__XXX
+ SG_ IsCharging : 55|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ RollingCounter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1540 RB_IMU_GYRO: 8 RaceBoxCompanion
+ SG_ RotationRate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ RotationRate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ RotationRate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+
+BO_ 1541 RB_UTC_TIME: 8 RaceBoxCompanion
+ SG_ UTC_Year : 0|16@1+ (1,0) [2000|2099] "year" Vector__XXX
+ SG_ UTC_Month : 16|8@1+ (1,0) [1|12] "month" Vector__XXX
+ SG_ UTC_Day : 24|8@1+ (1,0) [1|31] "day" Vector__XXX
+ SG_ UTC_Hour : 32|8@1+ (1,0) [0|23] "h" Vector__XXX
+ SG_ UTC_Minute : 40|8@1+ (1,0) [0|59] "min" Vector__XXX
+ SG_ UTC_Second : 48|8@1+ (1,0) [0|59] "s" Vector__XXX
+ SG_ UTC_Centisecond : 56|8@1+ (0.01,0) [0|0.99] "s" Vector__XXX
+
+CM_ BO_ 1536 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in view";
+CM_ BO_ 1537 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
+CM_ BO_ 1538 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
+CM_ BO_ 1539 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
+CM_ BO_ 1540 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
+CM_ BO_ 1541 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+
+VAL_ 1536 FixStatus 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
+VAL_ 1536 ValidFix 0 "Invalid" 1 "Valid" ;
+VAL_ 1536 ValidHeading 0 "Invalid" 1 "Valid" ;
+VAL_ 1539 IsCharging 0 "Discharging" 1 "Charging" ;
+

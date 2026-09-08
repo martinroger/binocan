@@ -1,0 +1,402 @@
+VERSION "created by canmatrix"
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: external EXT ITF RDB LDB RBX
+VAL_TABLE_ ActHiLo_ST 1 "HI" 0 "LO" ;
+VAL_TABLE_ Binary_ST 1 "ON" 0 "OFF" ;
+VAL_TABLE_ Controller_ST 7 "Factory" 5 "OTA" 4 "Fault" 3 "Degraded" 2 "OK" 1 "Init" 0 "OFF" ;
+VAL_TABLE_ GearPosition_ST 14 "Uncertain" 15 "Reverse" 6 "Sixth" 5 "Fifth" 4 "Fourth" 3 "Third" 2 "Second" 1 "First" 0 "Neutral" ;
+VAL_TABLE_ version_MUX 1 "Commit ID" 0 "Base version tag and dirty flag" ;
+
+
+BO_ 773 DBG_ITF_fuel: 8 ITF
+ SG_ DBG_fuel_r : 52|12@1+ (1,0) [0|4095] "Ohm"  external
+ SG_ DBG_fuel_full_r : 40|12@1+ (1,0) [0|4095] "Ohm"  external
+ SG_ DBG_fuel_level_unfiltered : 32|8@1+ (1,0) [0|255] ""  external
+ SG_ DBG_fuel_raw_v : 0|32@1- (1,0) [0|4] "V"  external
+
+BO_ 772 DBG_ITF_pulse_counts: 8 ITF
+ SG_ DBG_speed_pulses : 32|32@1+ (1,0) [0|4294967295] ""  external
+ SG_ DBG_RPM_pulses : 0|32@1+ (1,0) [0|4294967295] ""  external
+
+BO_ 771 DBG_ITF_ADC_raw: 8 ITF
+ SG_ DBG_3V3_raw_v : 0|32@1- (1,0) [0|4] "V"  external
+ SG_ DBG_12V_raw_v : 32|32@1- (1,0) [0|4] "V"  external
+
+BO_ 770 DBG_ITF_coolant: 8 ITF
+ SG_ DBG_coolant_duty : 32|32@1- (1,0) [-1|101] "pc"  external
+ SG_ DBG_coolant_freq : 0|32@1- (1,0) [-1|1100] "Hz"  external
+
+BO_ 769 DBG_ITF_RPM: 8 ITF
+ SG_ DBG_RPM_freq : 0|32@1- (1,0) [-1|1100] "Hz"  external
+ SG_ DBG_RPM_duty : 32|32@1- (1,0) [-1|101] "pc"  external
+
+BO_ 768 DBG_ITF_speed: 8 ITF
+ SG_ DBG_speed_freq : 0|32@1- (1,0) [-1|1100] "Hz"  external
+ SG_ DBG_speed_duty : 32|32@1- (1,0) [-1|101] "pc"  external
+
+BO_ 306 RDB_board_version: 8 RDB
+ SG_ RDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external
+ SG_ RDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
+ SG_ RDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external
+ SG_ RDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external
+ SG_ RDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external
+ SG_ RDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279E+16] ""  external
+
+BO_ 305 LDB_board_version: 8 LDB
+ SG_ LDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external
+ SG_ LDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external
+ SG_ LDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279E+16] ""  external
+ SG_ LDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external
+ SG_ LDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external
+ SG_ LDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
+
+BO_ 1927 EXT_UDS_RESP: 8 EXT
+ SG_ EXT_uds_resp : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  ITF
+
+BO_ 1926 EXT_UDS_REQ: 8 ITF
+ SG_ EXT_uds_req : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  EXT
+
+BO_ 1925 RDB_UDS_RESP: 8 RDB
+ SG_ RDB_uds_resp : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  ITF
+
+BO_ 1924 RDB_UDS_REQ: 8 ITF
+ SG_ RDB_uds_req : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  RDB
+
+BO_ 1923 LDB_UDS_RESP: 8 LDB
+ SG_ LDB_uds_resp : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  ITF
+
+BO_ 1922 LDB_UDS_REQ: 8 ITF
+ SG_ LDB_uds_req : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  LDB
+
+BO_ 1921 ITF_UDS_RESP: 8 ITF
+ SG_ ITF_uds_resp : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  external
+
+BO_ 1920 ITF_UDS_REQ: 8 external
+ SG_ ITF_uds_req : 0|64@1+ (1,0) [0|1.84467440737096E+19] ""  ITF
+
+BO_ 304 ITF_board_version: 8 ITF
+ SG_ ITF_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external
+ SG_ ITF_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external
+ SG_ ITF_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external
+ SG_ ITF_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external
+ SG_ ITF_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279E+16] ""  external
+ SG_ ITF_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
+
+BO_ 290 RDB_ST: 8 RDB
+ SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] "" Vector__XXX
+ SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] "" Vector__XXX
+ SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ RDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  LDB
+
+BO_ 289 LDB_ST: 8 LDB
+ SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] "" Vector__XXX
+ SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] "" Vector__XXX
+ SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ LDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  RDB
+
+BO_ 288 ITF_board_ST: 8 ITF
+ SG_ ITF_expander_ST : 2|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ ITF__Hi_R_sense_ST : 1|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ ITF_ADC_ST : 3|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ ITF_MCU_temp : 17|7@1+ (1,0) [0|127] "degC" Vector__XXX
+ SG_ ITF_RD_check_alive_ST : 7|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_LD_check_alive_ST : 6|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_SM_ST : 13|3@1+ (1,0) [0|7] ""  LDB,RDB
+ SG_ ITF_5V_ST : 5|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_5V_AUX_ST : 4|1@1+ (1,0) [0|1] ""  LDB,RDB
+
+BO_ 273 ITF_odometer: 8 ITF
+ SG_ ITF_trip_rem_m : 36|4@1+ (100,0) [0|1500] "m"  LDB,RDB
+ SG_ ITF_trip_km : 24|12@1+ (1,0) [0|999] "km"  LDB,RDB
+ SG_ ITF_odometer_km : 0|20@1+ (1,0) [0|1048575] "km"  LDB,RDB
+ SG_ ITF_odo_rem_m : 20|4@1+ (100,0) [0|1500] "m"  LDB,RDB
+
+BO_ 513 EXT_chargecooling_metrics: 8 EXT
+ SG_ bitmask : 0|8@1+ (1,0) [0|255] ""  RDB,LDB
+ SG_ EXT_charge_coolant_temp_out : 16|8@1+ (1,0) [0|255] "degC"  RDB,LDB
+ SG_ EXT_charge_coolant_temp_in : 8|8@1+ (1,0) [0|255] "degC"  RDB,LDB
+
+BO_ 257 ITF_active_hi_lo: 8 ITF
+ SG_ ITF_backlight_AH : 15|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_alarm_AH : 14|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_button_AL : 13|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_door_AL_TT : 11|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_left_turn_AH_TT : 9|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_ignition_AH_ST : 0|1@1+ (1,0) [0|1] ""  LDB,RDB
+ SG_ ITF_right_turn_AH_TT : 8|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_parking_brake_AL_TT : 4|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_over_temperature_TT : 16|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_alternator_AL_TT : 2|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_oil_pressure_AL_TT : 5|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_fuel_low_TT : 17|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_coolant_low_AH_TT : 12|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_brake_low_AL_TT : 3|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_hi_beams_AH_TT : 1|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_CEL_AL_TT : 7|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_airbag_AL_TT : 6|1@1+ (1,0) [0|1] ""  RDB,LDB
+ SG_ ITF_abs_AL_TT : 10|1@1+ (1,0) [0|1] ""  RDB,LDB
+
+BO_ 512 EXT_oil_metrics: 8 EXT
+ SG_ bitmask : 0|8@1+ (1,0) [0|255] ""  RDB,LDB
+ SG_ EXT_oil_temperature : 16|8@1+ (1,0) [0|255] "degC"  RDB,LDB
+ SG_ EXT_oil_pressure : 8|8@1+ (0.1,0) [0|25.5] "bar"  RDB,LDB
+
+BO_ 272 ITF_slow_metrics: 8 ITF
+ SG_ ITF_lv_voltage_v : 16|8@1+ (0.1,0) [0|20] "V"  RDB,LDB
+ SG_ ITF_fuel_level_pc : 8|8@1+ (0.5,0) [0|101] "pc"  RDB,LDB
+ SG_ ITF_coolant_temp : 0|8@1+ (0.25,70) [70|130] "degC"  RDB,LDB
+
+BO_ 256 ITF_fast_metrics: 8 ITF
+ SG_ ITF_gear_position_ST : 32|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ ITF_speed_kph : 16|16@1+ (0.04,0) [0|400] "kph"  RDB,LDB
+ SG_ ITF_rpm : 0|16@1+ (0.14,0) [0|9174.9] ""  RDB,LDB
+
+BO_ 1536 RBX_SPEED_HEADING: 8 RBX
+ SG_ RBX_speed_kph : 0|16@1+ (0.01,0) [0|655.35] "km/h"  external
+ SG_ RBX_heading_deg : 16|16@1+ (0.01,0) [0|359.99] "deg"  external
+ SG_ RBX_spd_accuracy_kph : 32|16@1+ (0.01,0) [0|655.35] "km/h"  external
+ SG_ RBX_fix_ST : 48|4@1+ (1,0) [0|15] ""  external
+ SG_ RBX_valid_fix : 52|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_valid_heading : 53|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_num_SV : 56|8@1+ (1,0) [0|255] ""  external
+
+BO_ 1537 RBX_LAT_LON: 8 RBX
+ SG_ RBX_latitude_deg : 0|32@1- (1E-07,0) [-90|90] "deg"  external
+ SG_ RBX_longitude_deg : 32|32@1- (1E-07,0) [-180|180] "deg"  external
+
+BO_ 1538 RBX_ALT_ACCURACY: 8 RBX
+ SG_ RBX_msl_altitude_m : 0|32@1- (0.001,0) [-1000|20000] "m"  external
+ SG_ RBX_horizontal_accuracy_m : 32|16@1+ (0.01,0) [0|655.35] "m"  external
+ SG_ RBX_PDOP : 48|16@1+ (0.01,0) [0|655.35] ""  external
+
+BO_ 1539 RBX_IMU_ACCEL: 8 RBX
+ SG_ RBX_accel_X_g : 0|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_accel_Y_g : 16|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_accel_Z_g : 32|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_battery_pc : 48|7@1+ (1,0) [0|100] "pc"  external
+ SG_ RBX_charging_ST : 55|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_counter : 56|8@1+ (1,0) [0|255] ""  external
+
+BO_ 1540 RBX_IMU_GYRO: 8 RBX
+ SG_ RBX_rot_rate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_rot_rate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_rot_rate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+
+BO_ 1541 RBX_UTC_TIME: 8 RBX
+ SG_ RBX_UTC_year : 0|16@1+ (1,0) [2000|2099] "year"  external
+ SG_ RBX_UTC_month : 16|8@1+ (1,0) [1|12] "month"  external
+ SG_ RBX_UTC_day : 24|8@1+ (1,0) [1|31] "day"  external
+ SG_ RBX_UTC_hour : 32|8@1+ (1,0) [0|23] "h"  external
+ SG_ RBX_UTC_minute : 40|8@1+ (1,0) [0|59] "min"  external
+ SG_ RBX_UTC_second : 48|8@1+ (1,0) [0|59] "s"  external
+ SG_ RBX_UTC_centisecond : 56|8@1+ (0.01,0) [0|0.99] "s"  external
+
+
+
+CM_ BU_ EXT "Extension controller";
+CM_ BU_ ITF "Interface board inside the instrument cluster
+";
+CM_ BU_ RDB "Right display board
+";
+CM_ BU_ LDB "Left display board
+";
+CM_ BO_ 306 "Interface board software version information";
+CM_ BO_ 305 "Interface board software version information";
+CM_ BO_ 1927 "External controller UDS response
+";
+CM_ BO_ 1926 "UDS requests to External controller
+";
+CM_ BO_ 1925 "UDS responses from the right display";
+CM_ BO_ 1924 "UDS requests to the right display";
+CM_ BO_ 1923 "UDS responses from the left display";
+CM_ BO_ 1922 "UDS requests to the left display";
+CM_ BO_ 1921 "UDS responses from the interface board";
+CM_ BO_ 1920 "UDS requests to the interface board";
+CM_ BO_ 304 "Interface board software version information";
+CM_ BO_ 290 "Right display board status
+";
+CM_ SG_ 290 XDB_mode_lock "Indicates if the mode lock is active or not.";
+CM_ SG_ 290 XDB_light_mode "Whether the light mode on this display is active or not";
+CM_ BO_ 289 "Left display board status
+";
+CM_ SG_ 289 XDB_mode_lock "Indicates if the mode lock is active or not.";
+CM_ SG_ 289 XDB_light_mode "Whether the light mode on this display is active or not";
+CM_ BO_ 288 "Interface board status
+";
+CM_ SG_ 288 ITF_expander_ST "Indicates if the IO expander on the interface board is in a valid (ON) or invalid (OFF) state.";
+CM_ SG_ 288 ITF__Hi_R_sense_ST "Reports status of the interface board Hi R sense enable toggle.";
+CM_ SG_ 288 ITF_ADC_ST "Indicates if the ADC on the interface board is in a valid (ON) or invalid (OFF) state.";
+CM_ SG_ 288 ITF_MCU_temp "Internal temperature of the MCU.";
+CM_ SG_ 288 ITF_RD_check_alive_ST "On if the right display is reporting a 3V3 signal.";
+CM_ SG_ 288 ITF_LD_check_alive_ST "On if the left display is reporting a 3V3 signal.";
+CM_ SG_ 288 ITF_SM_ST "Interface board system status.";
+CM_ SG_ 288 ITF_5V_ST "Status of the main 5V power supply. Linked to right display if present, and main board CAN transceiver on older board revisions.";
+CM_ SG_ 288 ITF_5V_AUX_ST "Status of the auxiliary 5V power supply. Linked to left display if present.";
+CM_ BO_ 273 "Odometer and trip information from interface board";
+CM_ SG_ 273 ITF_odometer_km "Odometer in km.";
+CM_ SG_ 273 ITF_odo_rem_m "Odometer remaining hundreds of meter.";
+CM_ BO_ 513 "Metrics related to chargecooling";
+CM_ SG_ 513 bitmask "Bitmask used to highlight unavailable signals in a standard message";
+CM_ SG_ 513 EXT_charge_coolant_temp_out "Charge coolant temperature out of the intake intercooler";
+CM_ SG_ 513 EXT_charge_coolant_temp_in "Charge coolant temperature at intercooler inlet";
+CM_ BO_ 257 "Medium priority cyclic and trigger telltale message";
+CM_ SG_ 257 ITF_backlight_AH "LCD backlight input, might be related to headlights in low beam or position.";
+CM_ SG_ 257 ITF_alarm_AH "Unknown active high. Could be alarm or revlight";
+CM_ SG_ 257 ITF_button_AL "Button status";
+CM_ SG_ 257 ITF_door_AL_TT "Door telltale status";
+CM_ SG_ 257 ITF_left_turn_AH_TT "Turn indicators telltale";
+CM_ SG_ 257 ITF_right_turn_AH_TT "Turn indicators telltale";
+CM_ SG_ 257 ITF_parking_brake_AL_TT "Parking brake telltale";
+CM_ SG_ 257 ITF_over_temperature_TT "Coolant overtemperature telltale";
+CM_ SG_ 257 ITF_alternator_AL_TT "Battery or alternator telltale";
+CM_ SG_ 257 ITF_oil_pressure_AL_TT "Low oil pressure telltale";
+CM_ SG_ 257 ITF_fuel_low_TT "Low fuel level telltale";
+CM_ SG_ 257 ITF_coolant_low_AH_TT "Low coolant level telltale";
+CM_ SG_ 257 ITF_brake_low_AL_TT "Low brake fluid telltale";
+CM_ SG_ 257 ITF_hi_beams_AH_TT "High beams telltale";
+CM_ SG_ 257 ITF_CEL_AL_TT "Check Engine Light telltale";
+CM_ SG_ 257 ITF_airbag_AL_TT "Airbag telltale";
+CM_ SG_ 257 ITF_abs_AL_TT "ABS telltale";
+CM_ BO_ 512 "Message for extra measurements related to oil metrics";
+CM_ SG_ 512 bitmask "Bitmask used to highlight unavailable signals in a standard message";
+CM_ SG_ 512 EXT_oil_temperature "Optional oil temperature reading";
+CM_ SG_ 512 EXT_oil_pressure "Optional oil pressure reading";
+CM_ BO_ 272 "Slow cyclic message with numerical readings";
+CM_ SG_ 272 ITF_lv_voltage_v "12V measured after protection circuitry";
+CM_ SG_ 272 ITF_fuel_level_pc "Relative fuel tank level";
+CM_ SG_ 272 ITF_coolant_temp "Indicated coolant temperature";
+CM_ BO_ 256 "Fast cyclic message for base vehicle metrics and telltale triggers";
+CM_ SG_ 256 ITF_gear_position_ST "Indicates a known gear position. Defaults to Neutral (0)";
+CM_ SG_ 256 ITF_speed_kph "Vehicle speed in km/h";
+CM_ SG_ 256 ITF_rpm "Engine rotations in RPM";
+CM_ BO_ 1536 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in view";
+CM_ BO_ 1537 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
+CM_ BO_ 1538 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
+CM_ BO_ 1539 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
+CM_ BO_ 1540 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
+CM_ BO_ 1541 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+BA_DEF_ BO_  "GenMsgCycleTime" INT 2 10000;
+BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","SendOnRequest","CyclicIfActive","SendOnRequestWithDelay","CyclicAndSendOnRequest","CyclicAndSendOnRequestWithDelay","IfActive","NoMsgSendType";
+BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
+BA_DEF_ SG_  "SigType" ENUM  "Default","Range","RangeSigned","ASCII","Discrete","Control","ReferencePGN","DTC","StringDelimiter","StringLength","StringLengthControl","PayloadCRC","PayloadCounter";
+BA_DEF_  "Baudrate" INT 0 1000000;
+BA_DEF_  "BusType" STRING ;
+BA_DEF_  "MultiplexExtEnabled" ENUM  "No","Yes";
+BA_DEF_DEF_  "GenMsgCycleTime" 100;
+BA_DEF_DEF_  "GenMsgSendType" "Cyclic";
+BA_DEF_DEF_  "GenSigStartValue" 0;
+BA_DEF_DEF_  "SigType" "Default";
+BA_DEF_DEF_  "Baudrate" 500000;
+BA_DEF_DEF_  "BusType" "CAN";
+BA_DEF_DEF_  "MultiplexExtEnabled" "No";
+BA_ "GenMsgCycleTime" BO_ 773 200;
+BA_ "GenMsgCycleTime" BO_ 306 1000;
+BA_ "GenMsgCycleTime" BO_ 305 1000;
+BA_ "GenMsgSendType" BO_ 1927 1;
+BA_ "GenMsgSendType" BO_ 1926 1;
+BA_ "GenMsgSendType" BO_ 1925 1;
+BA_ "GenMsgSendType" BO_ 1924 1;
+BA_ "GenMsgSendType" BO_ 1923 1;
+BA_ "GenMsgSendType" BO_ 1922 1;
+BA_ "GenMsgSendType" BO_ 1921 1;
+BA_ "GenMsgSendType" BO_ 1920 1;
+BA_ "GenMsgCycleTime" BO_ 304 1000;
+BA_ "GenMsgCycleTime" BO_ 290 200;
+BA_ "GenMsgCycleTime" BO_ 289 200;
+BA_ "GenMsgCycleTime" BO_ 288 200;
+BA_ "GenMsgCycleTime" BO_ 273 250;
+BA_ "GenMsgSendType" BO_ 257 4;
+BA_ "GenMsgCycleTime" BO_ 257 200;
+BA_ "GenMsgCycleTime" BO_ 272 500;
+BA_ "GenSigStartValue" SG_ 290 XDB_light_brightness 10;
+BA_ "GenSigStartValue" SG_ 290 XDB_dark_brightness 10;
+BA_ "GenSigStartValue" SG_ 289 XDB_light_brightness 10;
+BA_ "GenSigStartValue" SG_ 289 XDB_dark_brightness 10;
+BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_year 2000;
+BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_month 1;
+BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_day 1;
+VAL_ 306 RDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
+VAL_ 305 LDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
+VAL_ 304 ITF_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
+VAL_ 290 XDB_mode_lock 0 "OFF" 1 "ON" ;
+VAL_ 290 XDB_light_mode 0 "OFF" 1 "ON" ;
+VAL_ 290 RDB_SM_ST 0 "OFF" 1 "Init" 2 "OK" 3 "Degraded" 4 "Fault" 5 "OTA" 7 "Factory" ;
+VAL_ 289 XDB_mode_lock 0 "OFF" 1 "ON" ;
+VAL_ 289 XDB_light_mode 0 "OFF" 1 "ON" ;
+VAL_ 289 LDB_SM_ST 0 "OFF" 1 "Init" 2 "OK" 3 "Degraded" 4 "Fault" 5 "OTA" 7 "Factory" ;
+VAL_ 288 ITF_expander_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF__Hi_R_sense_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF_ADC_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF_RD_check_alive_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF_LD_check_alive_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF_SM_ST 0 "OFF" 1 "Init" 2 "OK" 3 "Degraded" 4 "Fault" 5 "OTA" 7 "Factory" ;
+VAL_ 288 ITF_5V_ST 0 "OFF" 1 "ON" ;
+VAL_ 288 ITF_5V_AUX_ST 0 "OFF" 1 "ON" ;
+VAL_ 257 ITF_backlight_AH 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_alarm_AH 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_button_AL 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_door_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_left_turn_AH_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_ignition_AH_ST 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_right_turn_AH_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_parking_brake_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_over_temperature_TT 0 "OFF" 1 "ON" ;
+VAL_ 257 ITF_alternator_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_oil_pressure_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_fuel_low_TT 0 "OFF" 1 "ON" ;
+VAL_ 257 ITF_coolant_low_AH_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_brake_low_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_hi_beams_AH_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_CEL_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_airbag_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 257 ITF_abs_AL_TT 0 "LO" 1 "HI" ;
+VAL_ 256 ITF_gear_position_ST 0 "Neutral" 1 "First" 2 "Second" 3 "Third" 4 "Fourth" 5 "Fifth" 6 "Sixth" 14 "Uncertain" 15 "Reverse" ;
+VAL_ 1536 RBX_fix_ST 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
+VAL_ 1536 RBX_valid_fix 0 "Invalid" 1 "Valid" ;
+VAL_ 1536 RBX_valid_heading 0 "Invalid" 1 "Valid" ;
+VAL_ 1539 RBX_charging_ST 0 "Discharging" 1 "Charging" ;
+SIG_VALTYPE_ 773 DBG_fuel_raw_v : 1;
+SIG_VALTYPE_ 771 DBG_3V3_raw_v : 1;
+SIG_VALTYPE_ 771 DBG_12V_raw_v : 1;
+SIG_VALTYPE_ 770 DBG_coolant_duty : 1;
+SIG_VALTYPE_ 770 DBG_coolant_freq : 1;
+SIG_VALTYPE_ 769 DBG_RPM_freq : 1;
+SIG_VALTYPE_ 769 DBG_RPM_duty : 1;
+SIG_VALTYPE_ 768 DBG_speed_freq : 1;
+SIG_VALTYPE_ 768 DBG_speed_duty : 1;
+
