@@ -186,7 +186,7 @@ BO_ 256 ITF_fast_metrics: 8 ITF
  SG_ ITF_speed_kph : 16|16@1+ (0.04,0) [0|400] "kph"  RDB,LDB
  SG_ ITF_rpm : 0|16@1+ (0.14,0) [0|9174.9] ""  RDB,LDB
 
-BO_ 1536 RBX_SPEED_HEADING: 8 RBX
+BO_ 1638 RBX_SPEED_HEADING: 8 RBX
  SG_ RBX_speed_kph : 0|16@1+ (0.01,0) [0|655.35] "km/h"  external
  SG_ RBX_heading_deg : 16|16@1+ (0.01,0) [0|359.99] "deg"  external
  SG_ RBX_spd_accuracy_kph : 32|16@1+ (0.01,0) [0|655.35] "km/h"  external
@@ -195,16 +195,16 @@ BO_ 1536 RBX_SPEED_HEADING: 8 RBX
  SG_ RBX_valid_heading : 53|1@1+ (1,0) [0|1] ""  external
  SG_ RBX_num_SV : 56|8@1+ (1,0) [0|255] ""  external
 
-BO_ 1537 RBX_LAT_LON: 8 RBX
+BO_ 1639 RBX_LAT_LON: 8 RBX
  SG_ RBX_latitude_deg : 0|32@1- (1E-07,0) [-90|90] "deg"  external
  SG_ RBX_longitude_deg : 32|32@1- (1E-07,0) [-180|180] "deg"  external
 
-BO_ 1538 RBX_ALT_ACCURACY: 8 RBX
+BO_ 1640 RBX_ALT_ACCURACY: 8 RBX
  SG_ RBX_msl_altitude_m : 0|32@1- (0.001,0) [-1000|20000] "m"  external
  SG_ RBX_horizontal_accuracy_m : 32|16@1+ (0.01,0) [0|655.35] "m"  external
  SG_ RBX_PDOP : 48|16@1+ (0.01,0) [0|655.35] ""  external
 
-BO_ 1539 RBX_IMU_ACCEL: 8 RBX
+BO_ 1641 RBX_IMU_ACCEL: 8 RBX
  SG_ RBX_accel_X_g : 0|16@1- (0.001,0) [-32.768|32.767] "g"  external
  SG_ RBX_accel_Y_g : 16|16@1- (0.001,0) [-32.768|32.767] "g"  external
  SG_ RBX_accel_Z_g : 32|16@1- (0.001,0) [-32.768|32.767] "g"  external
@@ -212,12 +212,12 @@ BO_ 1539 RBX_IMU_ACCEL: 8 RBX
  SG_ RBX_charging_ST : 55|1@1+ (1,0) [0|1] ""  external
  SG_ RBX_counter : 56|8@1+ (1,0) [0|255] ""  external
 
-BO_ 1540 RBX_IMU_GYRO: 8 RBX
+BO_ 1648 RBX_IMU_GYRO: 8 RBX
  SG_ RBX_rot_rate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
  SG_ RBX_rot_rate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
  SG_ RBX_rot_rate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
 
-BO_ 1541 RBX_UTC_TIME: 8 RBX
+BO_ 1649 RBX_UTC_TIME: 8 RBX
  SG_ RBX_UTC_year : 0|16@1+ (1,0) [2000|2099] "year"  external
  SG_ RBX_UTC_month : 16|8@1+ (1,0) [1|12] "month"  external
  SG_ RBX_UTC_day : 24|8@1+ (1,0) [1|31] "day"  external
@@ -304,12 +304,12 @@ CM_ BO_ 256 "Fast cyclic message for base vehicle metrics and telltale triggers"
 CM_ SG_ 256 ITF_gear_position_ST "Indicates a known gear position. Defaults to Neutral (0)";
 CM_ SG_ 256 ITF_speed_kph "Vehicle speed in km/h";
 CM_ SG_ 256 ITF_rpm "Engine rotations in RPM";
-CM_ BO_ 1536 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in view";
-CM_ BO_ 1537 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
-CM_ BO_ 1538 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
-CM_ BO_ 1539 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
-CM_ BO_ 1540 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
-CM_ BO_ 1541 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+CM_ BO_ 1638 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in view";
+CM_ BO_ 1639 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
+CM_ BO_ 1640 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
+CM_ BO_ 1641 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
+CM_ BO_ 1648 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
+CM_ BO_ 1649 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
 BA_DEF_ BO_  "GenMsgCycleTime" INT 2 10000;
 BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","SendOnRequest","CyclicIfActive","SendOnRequestWithDelay","CyclicAndSendOnRequest","CyclicAndSendOnRequestWithDelay","IfActive","NoMsgSendType";
 BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
@@ -340,16 +340,16 @@ BA_ "GenMsgCycleTime" BO_ 290 200;
 BA_ "GenMsgCycleTime" BO_ 289 200;
 BA_ "GenMsgCycleTime" BO_ 288 200;
 BA_ "GenMsgCycleTime" BO_ 273 250;
-BA_ "GenMsgSendType" BO_ 257 4;
 BA_ "GenMsgCycleTime" BO_ 257 200;
+BA_ "GenMsgSendType" BO_ 257 4;
 BA_ "GenMsgCycleTime" BO_ 272 500;
 BA_ "GenSigStartValue" SG_ 290 XDB_light_brightness 10;
 BA_ "GenSigStartValue" SG_ 290 XDB_dark_brightness 10;
 BA_ "GenSigStartValue" SG_ 289 XDB_light_brightness 10;
 BA_ "GenSigStartValue" SG_ 289 XDB_dark_brightness 10;
-BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_year 2000;
-BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_month 1;
-BA_ "GenSigStartValue" SG_ 1541 RBX_UTC_day 1;
+BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_year 2000;
+BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_month 1;
+BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_day 1;
 VAL_ 306 RDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
 VAL_ 305 LDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
 VAL_ 304 ITF_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
@@ -386,10 +386,10 @@ VAL_ 257 ITF_CEL_AL_TT 0 "LO" 1 "HI" ;
 VAL_ 257 ITF_airbag_AL_TT 0 "LO" 1 "HI" ;
 VAL_ 257 ITF_abs_AL_TT 0 "LO" 1 "HI" ;
 VAL_ 256 ITF_gear_position_ST 0 "Neutral" 1 "First" 2 "Second" 3 "Third" 4 "Fourth" 5 "Fifth" 6 "Sixth" 14 "Uncertain" 15 "Reverse" ;
-VAL_ 1536 RBX_fix_ST 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
-VAL_ 1536 RBX_valid_fix 0 "Invalid" 1 "Valid" ;
-VAL_ 1536 RBX_valid_heading 0 "Invalid" 1 "Valid" ;
-VAL_ 1539 RBX_charging_ST 0 "Discharging" 1 "Charging" ;
+VAL_ 1638 RBX_fix_ST 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
+VAL_ 1638 RBX_valid_fix 0 "Invalid" 1 "Valid" ;
+VAL_ 1638 RBX_valid_heading 0 "Invalid" 1 "Valid" ;
+VAL_ 1641 RBX_charging_ST 0 "Discharging" 1 "Charging" ;
 SIG_VALTYPE_ 773 DBG_fuel_raw_v : 1;
 SIG_VALTYPE_ 771 DBG_3V3_raw_v : 1;
 SIG_VALTYPE_ 771 DBG_12V_raw_v : 1;

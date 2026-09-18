@@ -1,4 +1,4 @@
-version: "0.1.0"
+version: "0.1.1"
 description: "Binocan CAN protocol bindings and DBC definitions for ESP-IDF"
 url: "https://github.com/martinroger/binocan"
 repository: "https://github.com/martinroger/binocan.git"
