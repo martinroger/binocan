@@ -212,12 +212,12 @@ BO_ 1641 RBX_IMU_ACCEL: 8 RBX
  SG_ RBX_charging_ST : 55|1@1+ (1,0) [0|1] ""  external
  SG_ RBX_counter : 56|8@1+ (1,0) [0|255] ""  external
 
-BO_ 1648 RBX_IMU_GYRO: 8 RBX
+BO_ 1642 RBX_IMU_GYRO: 8 RBX
  SG_ RBX_rot_rate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
  SG_ RBX_rot_rate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
  SG_ RBX_rot_rate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
 
-BO_ 1649 RBX_UTC_TIME: 8 RBX
+BO_ 1643 RBX_UTC_TIME: 8 RBX
  SG_ RBX_UTC_year : 0|16@1+ (1,0) [2000|2099] "year"  external
  SG_ RBX_UTC_month : 16|8@1+ (1,0) [1|12] "month"  external
  SG_ RBX_UTC_day : 24|8@1+ (1,0) [1|31] "day"  external
@@ -308,8 +308,8 @@ CM_ BO_ 1638 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in 
 CM_ BO_ 1639 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
 CM_ BO_ 1640 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
 CM_ BO_ 1641 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
-CM_ BO_ 1648 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
-CM_ BO_ 1649 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+CM_ BO_ 1642 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
+CM_ BO_ 1643 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
 BA_DEF_ BO_  "GenMsgCycleTime" INT 2 10000;
 BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","SendOnRequest","CyclicIfActive","SendOnRequestWithDelay","CyclicAndSendOnRequest","CyclicAndSendOnRequestWithDelay","IfActive","NoMsgSendType";
 BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
@@ -347,9 +347,9 @@ BA_ "GenSigStartValue" SG_ 290 XDB_light_brightness 10;
 BA_ "GenSigStartValue" SG_ 290 XDB_dark_brightness 10;
 BA_ "GenSigStartValue" SG_ 289 XDB_light_brightness 10;
 BA_ "GenSigStartValue" SG_ 289 XDB_dark_brightness 10;
-BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_year 2000;
-BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_month 1;
-BA_ "GenSigStartValue" SG_ 1649 RBX_UTC_day 1;
+BA_ "GenSigStartValue" SG_ 1643 RBX_UTC_year 2000;
+BA_ "GenSigStartValue" SG_ 1643 RBX_UTC_month 1;
+BA_ "GenSigStartValue" SG_ 1643 RBX_UTC_day 1;
 VAL_ 306 RDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
 VAL_ 305 LDB_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;
 VAL_ 304 ITF_version_MUX 0 "Base version tag and dirty flag" 1 "Commit ID" ;

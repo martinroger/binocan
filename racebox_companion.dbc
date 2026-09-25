@@ -62,12 +62,12 @@ BO_ 1641 RB_IMU_ACCEL: 8 RaceBoxCompanion
  SG_ IsCharging : 55|1@1+ (1,0) [0|1] "" Vector__XXX
  SG_ RollingCounter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
 
-BO_ 1648 RB_IMU_GYRO: 8 RaceBoxCompanion
+BO_ 1642 RB_IMU_GYRO: 8 RaceBoxCompanion
  SG_ RotationRate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
  SG_ RotationRate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
  SG_ RotationRate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
 
-BO_ 1649 RB_UTC_TIME: 8 RaceBoxCompanion
+BO_ 1643 RB_UTC_TIME: 8 RaceBoxCompanion
  SG_ UTC_Year : 0|16@1+ (1,0) [2000|2099] "year" Vector__XXX
  SG_ UTC_Month : 16|8@1+ (1,0) [1|12] "month" Vector__XXX
  SG_ UTC_Day : 24|8@1+ (1,0) [1|31] "day" Vector__XXX
@@ -82,8 +82,8 @@ CM_ BO_ 1638 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in 
 CM_ BO_ 1639 "RaceBox GPS High-Precision Latitude and Longitude Coordinates (WGS84)";
 CM_ BO_ 1640 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP";
 CM_ BO_ 1641 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
-CM_ BO_ 1648 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
-CM_ BO_ 1649 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+CM_ BO_ 1642 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
+CM_ BO_ 1643 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
 VAL_ 1638 FixStatus 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
 VAL_ 1638 ValidFix 0 "Invalid" 1 "Valid" ;
 VAL_ 1638 ValidHeading 0 "Invalid" 1 "Valid" ;
