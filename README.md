@@ -50,16 +50,15 @@ git clone https://github.com/martinroger/binocan.git
 ```c
 #include "binocan.h"
 
-// Example: Packing ITF status message
-struct binocan_itf_status_t status = {
-    .coolant_temp = 85,
-    .fuel_level = 42,
-    .battery_voltage = 13.8f,
-    .indicators = 0x01,
+// Example: Packing ITF slow metrics message
+struct binocan_itf_slow_metrics_t metrics = {
+    .itf_coolant_temp = binocan_itf_slow_metrics_itf_coolant_temp_encode(85.0),
+    .itf_fuel_level_pc = binocan_itf_slow_metrics_itf_fuel_level_pc_encode(42.0),
+    .itf_lv_voltage_v = binocan_itf_slow_metrics_itf_lv_voltage_v_encode(13.8),
 };
 
 uint8_t payload[8];
-int len = binocan_itf_status_pack(payload, &status, sizeof(payload));
+int len = binocan_itf_slow_metrics_pack(payload, &metrics, sizeof(payload));
 
 // Transmit payload over TWAI / CAN driver...
 ```
@@ -68,13 +67,24 @@ int len = binocan_itf_status_pack(payload, &status, sizeof(payload));
 
 ## CAN Message Dictionary & Timing
 
+The Binocan protocol defines communications for core cluster telemetry, telltales, board status, debug metrics, and external devices.
+
+### Core Cluster & Operational Messages
+
 | Message Name | CAN ID (Hex) | Periodicity | Key Signals |
 | :--- | :--- | :--- | :--- |
-| **`ITF_values`** | `0x100` | 20 ms | Speed (km/h), Engine RPM, Odometer pulse delta |
-| **`ITF_status`** | `0x101` | 50 ms | Coolant Temperature (°C), Fuel level (L), Battery Voltage (V), Indicator bitmask |
-| **`ITF_debug`** | `0x102` | 100 ms | Raw ADC channels 0–3, SMA filtered voltages, internal loop stats |
+| **`ITF_fast_metrics`** | `0x100` | 25 ms (40 Hz) | Speed (`ITF_speed_kph`), Engine RPM (`ITF_rpm`), Gear Position (`ITF_gear_position_ST`) |
+| **`ITF_active_hi_lo`** | `0x101` | 200 ms / Event | Active telltales & inputs (turn signals, high beams, oil pressure, CEL, doors, etc.) |
+| **`ITF_slow_metrics`** | `0x110` | 500 ms (2 Hz) | Coolant Temperature (`ITF_coolant_temp`), Fuel Level (`ITF_fuel_level_pc`), Low Voltage (`ITF_lv_voltage_v`) |
+| **`ITF_odometer`** | `0x111` | 250 ms (4 Hz) | Total Odometer (`ITF_odometer_km` + remainder), Trip Odometer (`ITF_trip_km` + remainder) |
+| **`ITF_board_ST`** | `0x120` | 200 ms (5 Hz) | Board status machine (`ITF_SM_ST`), MCU Temperature, 5V/5V AUX rail states, alive checks |
+| **`LDB_ST`** | `0x121` | 200 ms (5 Hz) | Left Display Board status machine (`LDB_SM_ST`), brightness, mode lock |
+| **`RDB_ST`** | `0x122` | 200 ms (5 Hz) | Right Display Board status machine (`RDB_SM_ST`), brightness, mode lock |
+| **`ITF_board_version`** | `0x130` | 1000 ms (1 Hz) | Interface Board firmware version (major, minor, patch, dirty, commit ID) |
+| **`LDB_board_version`** | `0x131` | 1000 ms (1 Hz) | Left Display Board firmware version |
+| **`RDB_board_version`** | `0x132` | 1000 ms (1 Hz) | Right Display Board firmware version |
 
-For architectural details, see [TOO.MD](TOO.MD).
+Additional message groups include **External Metrics** (`0x200`–`0x201`), **Diagnostic Debug** (`0x300`–`0x305`), **RaceBox Telemetry** (`0x666`–`0x66B`), and **UDS Diagnostics** (`0x780`–`0x787`). For full architectural details, signal specifications, and diagrams, see [TOO.MD](TOO.MD).
 
 ---
 
