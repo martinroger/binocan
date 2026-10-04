@@ -57,6 +57,14 @@ session token; nothing else on the machine or in the browser can call it.
   and delete nodes (deleting a node still in use asks to remove it everywhere).
 - **Value tables**: create, rename, edit and delete global tables; editing a
   table updates the signals that use it.
+- **Merge**: bring messages, nodes and value tables from another DBC (a file next
+  to this one, or one from your computer). Each message is marked new, identical,
+  differs (with the changed fields listed) or clash (frame ID or name already
+  taken); you choose skip, add or replace per item, and may give an added message
+  a new ID or name. Nodes the chosen messages use are added automatically. Only the
+  send type and cycle time are carried over as message attributes, since attribute
+  definitions differ between DBCs; the list shows what is not copied. A merge is one
+  undoable edit.
 - **Busload**: live load of the working copy, with what-if cycle times and bitrate.
 - **Check**: the consistency issues, refreshed after every edit.
 - **Undo / Redo** (Ctrl+Z, Ctrl+Y), **Save** (Ctrl+S) and **Generate C**,

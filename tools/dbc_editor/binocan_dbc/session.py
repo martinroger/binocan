@@ -78,6 +78,27 @@ class Session:
                 "docs": [p.name for p in self.doc_paths],
             }
 
+    # ---------- merging ----------
+
+    def sibling_dbcs(self) -> List[Dict[str, Any]]:
+        """Other .dbc files next to the open one, offered as merge sources."""
+        return [{"name": f.name, "size": f.stat().st_size}
+                for f in sorted(self.path.parent.glob("*.dbc"))
+                if f.is_file() and f.resolve() != self.path]
+
+    def read_sibling(self, name: str) -> str:
+        target = (self.path.parent / str(name)).resolve()
+        if target.parent != self.path.parent or target.suffix.lower() != ".dbc" \
+                or target == self.path or not target.is_file():
+            raise ops.OpError(f"{name} is not a DBC file next to {self.path.name}")
+        return target.read_text(encoding=model.ENCODING)
+
+    def merge_preview(self, text: str) -> Dict[str, Any]:
+        from . import merge
+        with self._lock:
+            db, _ = self.current()
+            return merge.analyse(db, merge.parse(text))
+
     # ---------- editing ----------
 
     def apply(self, op: Dict[str, Any]) -> Dict[str, Any]:

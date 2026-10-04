@@ -163,3 +163,82 @@ class DocSyncTests(SessionCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MergeTests(SessionCase):
+    """Merging a second DBC; the incoming file is made by editing a copy of binocan.dbc."""
+
+    def incoming(self, *edits):
+        other = Session(self.tmp / "binocan.dbc", self.tmp / "src", doc_paths=[])
+        for op in edits:
+            other.apply(op)
+        return other.text
+
+    def test_self_merge_is_all_identical(self):
+        analysis = self.session.merge_preview(self.session.text)
+        self.assertEqual(analysis["summary"]["identical"], len(self.session.db.messages))
+        with self.assertRaises(ops.OpError):
+            self.session.apply({"op": "merge.apply", "text": self.session.text, "plan": {}})
+
+    def test_new_message_brings_nodes_and_tables(self):
+        text = self.incoming(
+            {"op": "node.add", "name": "NEWNODE", "comment": "from the other file"},
+            {"op": "table.add", "name": "NewTable", "entries": {"0": "a", "1": "b"}},
+            {"op": "message.add", "name": "NEWX", "frame_id": 0x1F0, "length": 4, "senders": ["NEWNODE"],
+             "cycle_time": 40},
+            {"op": "signal.add", "frame_id": 0x1F0, "name": "sig_x", "start": 0, "length": 8,
+             "receivers": ["ITF"]},
+            {"op": "message.set", "frame_id": 0x1F0, "field": "send_type", "value": "CyclicIfActive"})
+        analysis = self.session.merge_preview(text)
+        self.assertEqual([(m["name"], m["status"]) for m in analysis["messages"] if m["status"] != "identical"],
+                         [("NEWX", "new")])
+        self.assertEqual([t["status"] for t in analysis["tables"] if t["name"] == "NewTable"], ["new"])
+        self.session.apply({"op": "merge.apply", "text": text, "plan": {
+            "messages": {"NEWX": {"action": "add"}}, "tables": {"NewTable": {"action": "add"}}}})
+        m = self.msg(0x1F0)
+        self.assertEqual((m.name, m.cycle_time, m.send_type, m.senders), ("NEWX", 40, "CyclicIfActive", ["NEWNODE"]))
+        self.assertIn("NEWNODE", [n.name for n in self.session.db.nodes])
+        self.assertIn("NewTable", self.session.db.dbc.value_tables)
+        self.assertTrue(self.session.undo())
+        self.assertNotIn(0x1F0, [x.frame_id for x in self.session.db.messages])
+
+    def test_changed_message_is_replaced_only_on_request(self):
+        text = self.incoming({"op": "message.set", "frame_id": SLOW, "field": "cycle_time", "value": 400},
+                             {"op": "signal.set", "frame_id": SLOW, "name": "ITF_lv_voltage_v",
+                              "field": "unit", "value": "mV"})
+        item = next(m for m in self.session.merge_preview(text)["messages"] if m["status"] == "differs")
+        self.assertEqual(item["name"], "ITF_slow_metrics")
+        self.assertTrue(any("cycle time" in c for c in item["changes"]))
+        self.assertTrue(any("ITF_lv_voltage_v" in c and "unit" in c for c in item["changes"]))
+        with self.assertRaises(ops.OpError):          # add would duplicate it
+            self.session.apply({"op": "merge.apply", "text": text,
+                                "plan": {"messages": {"ITF_slow_metrics": {"action": "add"}}}})
+        self.session.apply({"op": "merge.apply", "text": text,
+                            "plan": {"messages": {"ITF_slow_metrics": {"action": "replace"}}}})
+        self.assertEqual(self.msg().cycle_time, 400)
+        self.assertEqual(self.sig("ITF_lv_voltage_v").unit, "mV")
+
+    def test_frame_id_clash_needs_a_decision(self):
+        text = self.incoming({"op": "message.set", "frame_id": 0x100, "field": "name", "value": "OTHER_FAST"})
+        item = next(m for m in self.session.merge_preview(text)["messages"] if m["name"] == "OTHER_FAST")
+        self.assertEqual(item["status"], "clash")
+        self.assertGreater(item["free_id"], 0x100)
+        with self.assertRaises(ops.OpError):
+            self.session.apply({"op": "merge.apply", "text": text,
+                                "plan": {"messages": {"OTHER_FAST": {"action": "add"}}}})
+        self.session.apply({"op": "merge.apply", "text": text, "plan": {
+            "messages": {"OTHER_FAST": {"action": "add", "new_id": item["free_id"]}}}})
+        self.assertEqual(self.msg(item["free_id"]).name, "OTHER_FAST")
+        self.assertEqual(self.msg(0x100).name, "ITF_fast_metrics")
+
+    def test_unreadable_file_is_refused(self):
+        with self.assertRaises(ops.OpError):
+            self.session.merge_preview("this is not a dbc")
+
+    def test_only_neighbouring_dbc_files_can_be_read(self):
+        shutil.copy(self.tmp / "binocan.dbc", self.tmp / "other.dbc")
+        self.assertEqual([f["name"] for f in self.session.sibling_dbcs()], ["other.dbc"])
+        self.session.read_sibling("other.dbc")
+        for bad in ("../README.md", "README.md", "binocan.dbc", "nope.dbc"):
+            with self.subTest(name=bad), self.assertRaises(ops.OpError):
+                self.session.read_sibling(bad)

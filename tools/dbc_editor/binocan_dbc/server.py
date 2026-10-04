@@ -106,9 +106,19 @@ def make_handler(session: Session):
             except Exception as exc:
                 return self._json({"error": str(exc)}, 500)
 
+        def _merge_text(self, body: Dict[str, Any]) -> str:
+            if isinstance(body.get("file"), str):
+                return session.read_sibling(body["file"])
+            return body.get("text")
+
         def _api_post(self, path: str, body: Dict[str, Any]):
+            if path == "/api/merge/preview":
+                return self._json(session.merge_preview(self._merge_text(body)))
             if path == "/api/op":
-                res = session.apply(body.get("op"))
+                op = body.get("op")
+                if isinstance(op, dict) and op.get("op") == "merge.apply":
+                    op = {**op, "text": self._merge_text(op)}
+                res = session.apply(op)
                 res["status"] = session.status()
                 return self._json(res)
             if path in ("/api/undo", "/api/redo"):
@@ -135,6 +145,8 @@ def make_handler(session: Session):
                 payload["file"] = session.path.name
                 payload["status"] = session.status()
                 return self._json(payload)
+            if path == "/api/merge/files":
+                return self._json(session.sibling_dbcs())
             if path == "/api/status":
                 return self._json(session.status())
             if path == "/api/check":
