@@ -24,6 +24,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--version", action="version", version=__version__)
     parser.add_argument("-y", "--yes", action="store_true",
                         help="answer yes to cantools install or update prompts")
+    parser.add_argument("--venv", action="store_true",
+                        help="always run in the tool's own virtual environment "
+                             "(tools/dbc_editor/.venv), creating it if needed")
     parser.add_argument("--no-update-check", action="store_true",
                         help="skip the PyPI query for a newer cantools")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -59,6 +62,11 @@ def cmd_doctor(args) -> int:
     st = deps.status(check_latest=not args.no_update_check)
     print(f"Python    : {st['python']} ({st['python_executable']})")
     print(f"cantools  : {st['installed'] or 'not installed'} (minimum {st['minimum']})")
+    if deps.externally_managed():
+        print("pip       : externally managed (PEP 668); the tool will use its own venv")
+    venv_v = deps._venv_cantools_version()
+    if venv_v:
+        print(f"venv      : {deps.VENV_DIR} (cantools {venv_v})")
     print(f"PyPI      : {st['latest'] or 'not checked or unreachable'}")
     if st["installed"] is None or st["too_old"]:
         print("Status    : run any command to install or upgrade cantools")
@@ -123,7 +131,8 @@ def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "doctor":
         return cmd_doctor(args)
-    if not deps.ensure_cantools(assume_yes=args.yes, check_latest=not args.no_update_check):
+    if not deps.ensure_cantools(assume_yes=args.yes, check_latest=not args.no_update_check,
+                            use_venv=args.venv):
         print("cantools is required; stopping.")
         return 2
     if hasattr(args, "dbc") and not args.dbc.is_file():

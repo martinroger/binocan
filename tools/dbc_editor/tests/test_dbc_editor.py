@@ -10,6 +10,7 @@ import tempfile
 import threading
 import unittest
 import urllib.error
+from unittest import mock
 import urllib.request
 from pathlib import Path
 
@@ -156,6 +157,68 @@ class DepsTests(unittest.TestCase):
         st = deps.status(check_latest=False)
         self.assertIsNotNone(st["installed"])
         self.assertFalse(st["too_old"])
+
+
+class VenvFallbackTests(unittest.TestCase):
+    """cantools missing on an externally managed Python (PEP 668, e.g. Homebrew)."""
+
+    missing = {"python": "3.14.0", "python_executable": "/opt/homebrew/bin/python3.14",
+               "installed": None, "minimum": deps.MIN_VERSION, "latest": None,
+               "too_old": False, "outdated": False}
+
+    def setUp(self):
+        self.env = mock.patch.dict("os.environ", {}, clear=False)
+        self.env.start()
+        deps.os.environ.pop(deps.REEXEC_ENV, None)
+        for target, value in [
+            ("status", self.missing), ("externally_managed", True),
+            ("_in_our_venv", False), ("_venv_ready", False),
+        ]:
+            attr = mock.Mock(return_value=value)
+            p = mock.patch.object(deps, target, attr)
+            setattr(self, "m_" + target, p.start())
+            self.addCleanup(p.stop)
+
+    def tearDown(self):
+        self.env.stop()
+
+    def test_never_pip_installs_into_a_managed_python(self):
+        with mock.patch.object(deps, "pip_install") as pip, \
+                mock.patch.object(deps, "setup_venv", return_value=False) as setup:
+            self.assertFalse(deps.ensure_cantools(assume_yes=True))
+            pip.assert_not_called()
+            setup.assert_called_once()
+
+    def test_declined_venv_stops_cleanly(self):
+        with mock.patch.object(deps, "pip_install") as pip, \
+                mock.patch.object(deps, "setup_venv") as setup:
+            self.assertFalse(deps.ensure_cantools(assume_yes=False))  # no tty in tests
+            pip.assert_not_called()
+            setup.assert_not_called()
+
+    def test_existing_venv_is_reused_without_prompting(self):
+        self.m__venv_ready.return_value = True
+        with mock.patch.object(deps, "reexec_in_venv", side_effect=SystemExit(0)) as hop:
+            with self.assertRaises(SystemExit):
+                deps.ensure_cantools(assume_yes=False)
+            hop.assert_called_once()
+
+    def test_no_second_hop_from_inside_the_venv(self):
+        deps.os.environ[deps.REEXEC_ENV] = "1"
+        with mock.patch.object(deps, "reexec_in_venv") as hop, \
+                mock.patch.object(deps, "setup_venv") as setup:
+            self.assertFalse(deps.ensure_cantools(assume_yes=True))
+            hop.assert_not_called()
+            setup.assert_not_called()
+
+    def test_venv_flag_hops_when_ready(self):
+        self.m__venv_ready.return_value = True
+        with mock.patch.object(deps, "reexec_in_venv", side_effect=SystemExit(0)):
+            with self.assertRaises(SystemExit):
+                deps.ensure_cantools(assume_yes=True, use_venv=True)
+
+    def test_venv_python_path(self):
+        self.assertTrue(str(deps.venv_python()).startswith(str(deps.VENV_DIR)))
 
 
 class GenerateTests(unittest.TestCase):

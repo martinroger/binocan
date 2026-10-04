@@ -30,6 +30,14 @@ runs it:
 
 `--yes` answers those prompts for scripts, `--no-update-check` skips the PyPI query.
 
+**Externally managed Python (Homebrew on macOS, Debian and Ubuntu).** These
+refuse `pip install` into the system Python (PEP 668). The tool detects that,
+offers to create a private virtual environment in `tools/dbc_editor/.venv`
+(ignored by git), installs cantools there and re-runs your command with it.
+Later runs find that environment on their own. `--venv` forces it even when
+the system Python could install cantools; delete `.venv` to start over.
+On Debian or Ubuntu the venv step needs `sudo apt install python3-venv` once.
+
 ## Browser view
 
 `edit` starts a server on `127.0.0.1` and opens a link carrying a random
