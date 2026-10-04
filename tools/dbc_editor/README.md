@@ -49,6 +49,10 @@ session token; nothing else on the machine or in the browser can call it.
   offset, min, max, unit, start value (raw), receivers, value choices (one
   `value = label` per line, or "use table…") and comment. The 8 x 8 bit grid
   marks MSB and LSB and outlines overlaps; a selector picks multiplexer values.
+- **Bit layout**: drag a signal in the grid to move it, or drag the handle on its
+  last bit to change its length. A dashed outline previews the new position (red
+  where it would overlap another signal). Intel and Motorola signals follow their
+  own bit order; every drag is one undoable edit.
 - **Nodes**: click a matrix cell to cycle none, RX, TX; rename, comment, add
   and delete nodes (deleting a node still in use asks to remove it everywhere).
 - **Value tables**: create, rename, edit and delete global tables; editing a

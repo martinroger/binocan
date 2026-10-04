@@ -68,20 +68,20 @@ BO_ 768 DBG_ITF_speed: 8 ITF
  SG_ DBG_speed_freq : 0|32@1- (1,0) [-1|1100] "Hz"  external
 
 BO_ 306 RDB_board_version: 8 RDB
- SG_ RDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external
- SG_ RDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external
- SG_ RDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external
- SG_ RDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279e+16] ""  external
- SG_ RDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external
- SG_ RDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
+ SG_ RDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ RDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ RDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ RDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279e+16] ""  external,ITF
+ SG_ RDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external,ITF
+ SG_ RDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external,ITF
 
 BO_ 305 LDB_board_version: 8 LDB
- SG_ LDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external
- SG_ LDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external
- SG_ LDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external
- SG_ LDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279e+16] ""  external
- SG_ LDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external
- SG_ LDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
+ SG_ LDB_version_patch m0 : 24|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ LDB_version_minor m0 : 16|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ LDB_version_major m0 : 8|8@1+ (1,0) [0|255] ""  external,ITF
+ SG_ LDB_version_commit m1 : 8|56@1+ (1,0) [0|7.20575940379279e+16] ""  external,ITF
+ SG_ LDB_version_dirty m0 : 2|1@1+ (1,0) [0|1] ""  external,ITF
+ SG_ LDB_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external,ITF
 
 BO_ 1927 EXT_UDS_RESP: 8 EXT
  SG_ EXT_uds_resp : 0|64@1+ (1,0) [0|1.84467440737096e+19] ""  ITF
@@ -116,18 +116,18 @@ BO_ 304 ITF_board_version: 8 ITF
  SG_ ITF_version_MUX M : 0|2@1+ (1,0) [0|3] ""  external
 
 BO_ 290 RDB_ST: 8 RDB
- SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] "" Vector__XXX
- SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] "" Vector__XXX
- SG_ RDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  LDB
+ SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] ""  ITF
+ SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] ""  ITF
+ SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] ""  ITF
+ SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] ""  ITF
+ SG_ RDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  LDB,ITF
 
 BO_ 289 LDB_ST: 8 LDB
- SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] "" Vector__XXX
- SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] "" Vector__XXX
- SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] "" Vector__XXX
- SG_ LDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  RDB
+ SG_ XDB_light_mode : 23|1@1+ (1,0) [0|1] ""  ITF
+ SG_ XDB_light_brightness : 16|7@1+ (1,0) [10|100] ""  ITF
+ SG_ XDB_mode_lock : 15|1@1+ (1,0) [0|1] ""  ITF
+ SG_ XDB_dark_brightness : 8|7@1+ (1,0) [10|100] ""  ITF
+ SG_ LDB_SM_ST : 0|4@1+ (1,0) [0|15] ""  RDB,ITF
 
 BO_ 288 ITF_board_ST: 8 ITF
  SG_ ITF_MCU_temp : 17|7@1+ (1,0) [0|127] "degC" Vector__XXX
@@ -184,7 +184,7 @@ BO_ 272 ITF_slow_metrics: 8 ITF
 BO_ 256 ITF_fast_metrics: 8 ITF
  SG_ ITF_gear_position_ST : 32|4@1+ (1,0) [0|15] "" Vector__XXX
  SG_ ITF_speed_kph : 16|16@1+ (0.04,0) [0|400] "kph"  RDB,LDB
- SG_ ITF_rpm : 0|16@1+ (0.14,0) [0|9174.9] ""  RDB,LDB
+ SG_ ITF_rpm : 0|16@1+ (0.14,0) [0|9174.9] "RPM"  RDB,LDB
 
 BO_ 1638 RBX_SPEED_HEADING: 8 RBX
  SG_ RBX_num_SV : 56|8@1+ (1,0) [0|255] ""  external
@@ -281,6 +281,7 @@ CM_ BU_ RDB "Right display board
 ";
 CM_ BU_ LDB "Left display board
 ";
+CM_ BU_ RBX "Racebox";
 CM_ BO_ 306 "Interface board software version information";
 CM_ BO_ 305 "Interface board software version information";
 CM_ BO_ 1927 "External controller UDS response
