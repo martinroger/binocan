@@ -156,3 +156,9 @@ select { background: var(--panel); border: 1px solid var(--line); border-radius:
 .cell-role { cursor: pointer; text-align: center; min-width: 52px; }
 .cell-role:hover { background: var(--bg); }
 .vt textarea { max-width: 420px; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }
+
+.bitgrid { touch-action: none; user-select: none; }
+.bitgrid td.sig { cursor: grab; }
+.bitgrid td.ghost { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.bitgrid td.ghost-bad { outline: 2px dashed var(--error); outline-offset: -2px; }
+.bitgrid .rz { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,.28); border-radius: 0 4px 4px 0; }

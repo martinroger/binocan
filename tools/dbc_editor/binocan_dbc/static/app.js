@@ -100,6 +100,13 @@ function visibleSignals(m) {
   return m.signals.filter((s) => !s.multiplexer_ids || s.multiplexer_ids.includes(cur));
 }
 
+// Position of a bit along a signal: Intel signals run up the bit numbers,
+// Motorola signals run down each byte and on into the next one.
+const seqOfAbs = (abs, order) => (order === 'little_endian' ? abs : (abs >> 3) * 8 + (7 - (abs & 7)));
+const absOfSeq = (seq, order) => (order === 'little_endian' ? seq : (seq >> 3) * 8 + (7 - (seq & 7)));
+const bitsFor = (start, length, order) =>
+  Array.from({ length }, (_, i) => absOfSeq(seqOfAbs(start, order) + i, order));
+
 function bitGrid(m, signals) {
   const owner = new Map();       // bit -> [signal index]
   signals.forEach((s, i) => s.bits.forEach((b) => owner.set(b, [...(owner.get(b) || []), i])));
@@ -113,7 +120,7 @@ function bitGrid(m, signals) {
       const abs = byte * 8 + bit;
       const owners = owner.get(abs) || [];
       if (!owners.length) {
-        tr += `<td><span class="bitno">${abs}</span></td>`;
+        tr += `<td data-abs="${abs}"><span class="bitno">${abs}</span></td>`;
         continue;
       }
       const s = signals[owners[0]];
@@ -123,9 +130,10 @@ function bitGrid(m, signals) {
       if (owners.length > 1) cls.push('clash');
       if (state.highlight === s.name) cls.push('hl');
       const label = (abs === lsb || s.length <= 2) ? esc(s.name.length > 9 ? s.name.slice(0, 8) + '…' : s.name) : '';
-      tr += `<td class="${cls.join(' ')}" data-sig="${esc(s.name)}" style="background:${colourFor(m.signals.indexOf(s))}"
+      const endAbs = absOfSeq(seqOfAbs(s.start, s.byte_order) + s.length - 1, s.byte_order);
+      tr += `<td class="${cls.join(' ')}" data-abs="${abs}" data-sig="${esc(s.name)}" style="background:${colourFor(m.signals.indexOf(s))}"
         title="${esc(s.name)} · bit ${abs}${owners.length > 1 ? ' · OVERLAP with ' + esc(owners.slice(1).map((i) => signals[i].name).join(', ')) : ''}">
-        <span class="bitno">${abs}</span>${label}${abs === msb && s.length > 1 ? '<span class="msb">M</span>' : ''}${abs === lsb && s.length > 1 ? '<span class="lsb">L</span>' : ''}</td>`;
+        <span class="bitno">${abs}</span>${label}${abs === msb && s.length > 1 ? '<span class="msb">M</span>' : ''}${abs === lsb && s.length > 1 ? '<span class="lsb">L</span>' : ''}${abs === endAbs ? '<span class="rz" title="Drag to change the length"></span>' : ''}</td>`;
     }
     rows.push(tr + '</tr>');
   }
@@ -210,8 +218,68 @@ function renderMessage() {
   const sel = $('#mux-select');
   if (sel) sel.onchange = () => { state.mux[m.frame_id] = Number(sel.value); renderMessage(); };
   el.querySelectorAll('.legend [data-sig], .bitgrid [data-sig]').forEach((n) => {
-    n.onclick = () => { state.highlight = state.highlight === n.dataset.sig ? null : n.dataset.sig; renderMessage(); };
+    n.onclick = () => {
+      if (n.closest('.bitgrid') && n.closest('.bitgrid').dataset.dragged) return; state.highlight = state.highlight === n.dataset.sig ? null : n.dataset.sig; renderMessage(); };
   });
+
+  // drag in the bit grid: move a signal by its body, resize it by the handle on its last bit
+  const grid = el.querySelector('.bitgrid');
+  const cellAt = (x, y) => { const n = document.elementFromPoint(x, y); return n && n.closest ? n.closest('td[data-abs]') : null; };
+  let drag = null;
+  const clearGhost = () => grid.querySelectorAll('.ghost, .ghost-bad').forEach((c) => c.classList.remove('ghost', 'ghost-bad'));
+  const plan = (target) => {
+    const s = drag.sig;
+    const total = m.length * 8;
+    const t = seqOfAbs(Number(target.dataset.abs), s.byte_order);
+    const first = seqOfAbs(s.start, s.byte_order);
+    let start = s.start, length = s.length;
+    if (drag.mode === 'move') {
+      const ns = first + (t - drag.grab);
+      if (ns < 0 || ns + s.length > total) return null;
+      start = absOfSeq(ns, s.byte_order);
+    } else {
+      length = t - first + 1;
+      if (length < 1 || first + length > total) return null;
+    }
+    return { start, length, bits: bitsFor(start, length, s.byte_order) };
+  };
+  grid.onpointerdown = (e) => {
+    const cell = e.target.closest('td[data-sig]');
+    if (!cell || e.button !== 0) return;
+    const sig = m.signals.find((x) => x.name === cell.dataset.sig);
+    if (!sig) return;
+    drag = { sig, mode: e.target.classList.contains('rz') ? 'resize' : 'move',
+      grab: seqOfAbs(Number(cell.dataset.abs), sig.byte_order), moved: false };
+    grid.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  };
+  grid.onpointermove = (e) => {
+    if (!drag) return;
+    const target = cellAt(e.clientX, e.clientY);
+    clearGhost();
+    drag.plan = target ? plan(target) : null;
+    if (!drag.plan) return;
+    const others = new Set(sigs.filter((x) => x.name !== drag.sig.name).flatMap((x) => x.bits));
+    drag.plan.bits.forEach((b) => {
+      const c = grid.querySelector(`td[data-abs="${b}"]`);
+      if (c) c.classList.add(others.has(b) ? 'ghost-bad' : 'ghost');
+    });
+    if (drag.plan.start !== drag.sig.start || drag.plan.length !== drag.sig.length) drag.moved = true;
+  };
+  grid.onpointerup = () => {
+    if (!drag) return;
+    const d = drag; drag = null; clearGhost();
+    if (!d.moved || !d.plan) {   // a plain click: pointer capture swallowed it, so toggle here
+      state.highlight = state.highlight === d.sig.name ? null : d.sig.name;
+      renderMessage();
+      return;
+    }
+    const base = { op: 'signal.set', frame_id: m.frame_id, name: d.sig.name };
+    state.highlight = d.sig.name;
+    doOp(d.mode === 'move' ? { ...base, field: 'start', value: d.plan.start }
+                           : { ...base, field: 'length', value: d.plan.length });
+  };
+  grid.onpointercancel = () => { drag = null; clearGhost(); };
 
   // message fields
   el.querySelectorAll('[data-m]').forEach((inp) => {
