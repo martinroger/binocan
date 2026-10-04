@@ -40,3 +40,8 @@ Thumbs.db
 *.bak
 *.tmp
 *.log
+
+# Python tooling
+__pycache__/
+*.egg-info/
+.venv/

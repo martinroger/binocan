@@ -11,7 +11,6 @@ An ESP-IDF component providing C bindings and DBC definitions for the **Binocan 
 - **Generated C Bindings**: Pack and unpack routines with integer scaling and endianness normalization (`binocan.h` / `binocan.c`).
 - **DBC Definitions**:
   - `binocan.dbc`: Canonical network database.
-  - `binocan_savvy.dbc`: SavvyCAN-friendly definitions.
   - `racebox_companion.dbc`: Companion telemetry DBC.
 - **ESP-IDF Compatible**: Ready to be consumed as an ESP-IDF component (`idf_component.yml` included).
 

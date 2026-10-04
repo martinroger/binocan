@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "binocan-dbc"
+version = "0.1.0"
+description = "Browser-based editor and tools for the binocan DBC, built on cantools"
+requires-python = ">=3.10"  # cantools 43+ needs 3.10
+license = { text = "MIT" }
+dependencies = ["cantools>=43.0.2"]
+
+[project.scripts]
+binocan-dbc = "binocan_dbc.__main__:main"
+
+[tool.setuptools]
+packages = ["binocan_dbc"]
+
+[tool.setuptools.package-data]
+binocan_dbc = ["static/*"]
