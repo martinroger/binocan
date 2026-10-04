@@ -22,6 +22,7 @@ DBCS = [REPO / "binocan.dbc", REPO / "racebox_companion.dbc"]
 import cantools  # noqa: E402
 
 from binocan_dbc import busload, deps, generate, model, server, validate  # noqa: E402
+from binocan_dbc.session import Session  # noqa: E402
 
 
 class FidelityTests(unittest.TestCase):
@@ -231,7 +232,7 @@ class GenerateTests(unittest.TestCase):
 class ServerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.session = server.Session(REPO / "binocan.dbc", REPO / "src")
+        cls.session = Session(REPO / "binocan.dbc", REPO / "src")
         cls.httpd = server.make_server(cls.session, 0)
         cls.base = f"http://127.0.0.1:{cls.httpd.server_address[1]}"
         threading.Thread(target=cls.httpd.serve_forever, daemon=True).start()

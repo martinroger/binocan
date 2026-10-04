@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import secrets
-import threading
 import webbrowser
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -17,37 +16,18 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 from urllib.parse import parse_qs, urlparse
 
-from . import busload, deps, generate, model, validate
+from . import busload, deps, generate, model, ops, validate
 from .jsonmodel import database_json
+from .session import Session
 
 STATIC_DIR = Path(__file__).parent / "static"
+MAX_BODY = 1_000_000
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8",
     ".js": "text/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".svg": "image/svg+xml",
 }
-
-
-class Session:
-    """The open DBC, reloaded whenever the file changes on disk."""
-
-    def __init__(self, dbc_path: Path, c_output_dir: Path):
-        self.path = Path(dbc_path).resolve()
-        self.c_output_dir = Path(c_output_dir).resolve()
-        self.token = secrets.token_urlsafe(24)
-        self._lock = threading.Lock()
-        self._mtime: Optional[float] = None
-        self.db = None
-        self.text = ""
-
-    def current(self):
-        with self._lock:
-            mtime = self.path.stat().st_mtime
-            if self.db is None or mtime != self._mtime:
-                self.db, self.text = model.load(self.path)
-                self._mtime = mtime
-            return self.db, self.text
 
 
 def _parse_overrides(raw: str) -> Dict[int, int]:
@@ -98,6 +78,16 @@ def make_handler(session: Session):
                     return self._json({"error": str(exc)}, 500)
             return self._static(url.path)
 
+        def _body(self) -> Dict[str, Any]:
+            length = int(self.headers.get("Content-Length") or 0)
+            if length > MAX_BODY:
+                raise ValueError("request too large")
+            raw = self.rfile.read(length) if length else b"{}"
+            data = json.loads(raw.decode("utf-8") or "{}")
+            if not isinstance(data, dict):
+                raise ValueError("expected a JSON object")
+            return data
+
         def do_POST(self):
             if not self._host_ok():
                 return self._send(HTTPStatus.FORBIDDEN, b"bad host", "text/plain")
@@ -105,11 +95,37 @@ def make_handler(session: Session):
             if not self._authorised():
                 return self._json({"error": "missing or wrong token"}, 403)
             try:
-                if url.path == "/api/generate":
-                    res = generate.generate(session.path, session.c_output_dir)
-                    return self._json(res)
+                body = self._body()
+                return self._api_post(url.path, body)
+            except ops.OpError as exc:
+                return self._json({"error": str(exc)}, 400)
+            except model.SaveError as exc:
+                return self._json({"error": str(exc)}, 409)
+            except (ValueError, json.JSONDecodeError) as exc:
+                return self._json({"error": f"bad request: {exc}"}, 400)
             except Exception as exc:
                 return self._json({"error": str(exc)}, 500)
+
+        def _api_post(self, path: str, body: Dict[str, Any]):
+            if path == "/api/op":
+                res = session.apply(body.get("op"))
+                res["status"] = session.status()
+                return self._json(res)
+            if path in ("/api/undo", "/api/redo"):
+                ok = session.undo() if path == "/api/undo" else session.redo()
+                return self._json({"ok": ok, "status": session.status()})
+            if path == "/api/save":
+                res = session.save(sync_docs=bool(body.get("sync_docs", True)))
+                res["status"] = session.status()
+                return self._json(res)
+            if path == "/api/reload":
+                session.reload()
+                return self._json({"status": session.status()})
+            if path == "/api/generate":
+                if session.dirty:
+                    return self._json({"error": "Save the DBC first: C is generated from the "
+                                                "saved file."}, 409)
+                return self._json(generate.generate(session.path, session.c_output_dir))
             return self._json({"error": "not found"}, 404)
 
         def _api_get(self, path: str, query: Dict[str, list]):
@@ -117,7 +133,10 @@ def make_handler(session: Session):
             if path == "/api/db":
                 payload = database_json(db)
                 payload["file"] = session.path.name
+                payload["status"] = session.status()
                 return self._json(payload)
+            if path == "/api/status":
+                return self._json(session.status())
             if path == "/api/check":
                 return self._json(validate.check(db))
             if path == "/api/busload":

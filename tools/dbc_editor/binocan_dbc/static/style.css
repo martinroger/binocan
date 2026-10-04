@@ -131,3 +131,28 @@ main { padding: 0; }
   .detail { padding: 0 16px 48px; }
   .bitgrid td { width: 34px; }
 }
+
+.dirty { color: var(--warning); font-weight: 600; align-self: center; }
+button:disabled { opacity: .45; cursor: default; }
+button.danger { color: var(--error); }
+button.wide { width: 100%; margin-bottom: 8px; }
+.msg-head { display: flex; align-items: center; gap: 8px; }
+.msg-head h2, .msg-head h3 { margin: 0; }
+.spacer { flex: 1; }
+.props.edit input[type=text], .props.edit input[type=number], .props.edit select { width: 100%; }
+label.block { display: block; margin: 8px 0; font-size: 12px; color: var(--muted); }
+textarea { width: 100%; font: inherit; background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+select { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 4px; }
+.edit-table input[type=text], .edit-table input[type=number], .edit-table select, .edit-table textarea { padding: 3px 5px; }
+.edit-table .w-num { width: 72px; text-align: right; }
+.edit-table .w-name { width: 190px; }
+.edit-table .w-unit { width: 56px; }
+.edit-table textarea { min-width: 130px; }
+.name-cell { white-space: nowrap; }
+.pick { position: relative; }
+.pick summary { cursor: pointer; white-space: nowrap; }
+.pick-list { position: absolute; z-index: 4; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 120px; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+.w-wide { width: 100%; min-width: 260px; }
+.cell-role { cursor: pointer; text-align: center; min-width: 52px; }
+.cell-role:hover { background: var(--bg); }
+.vt textarea { max-width: 420px; font-family: ui-monospace, Consolas, monospace; font-size: 12.5px; }

@@ -25,6 +25,30 @@ async function api(path, opts = {}) {
   return body;
 }
 
+const post = (path, body = {}) => api(path, {
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+});
+
+// Sends one edit; the server validates it, so a refusal leaves everything as it was.
+async function doOp(op) {
+  try {
+    const r = await post('/api/op', { op });
+    if (r.select && r.select.frame_id !== undefined) {
+      state.selected = r.select.frame_id;
+      if (r.select.signal) state.highlight = r.select.signal;
+    }
+    banner('');
+    await load();
+    return true;
+  } catch (e) {
+    banner(e.message, 'error');
+    await load();   // put the form fields back to the stored values
+    return false;
+  }
+}
+
+const numOrNull = (v) => (String(v).trim() === '' ? null : Number(v));
+
 function banner(text, kind = '') {
   const b = $('#banner');
   if (!text) { b.hidden = true; return; }
@@ -108,6 +132,14 @@ function bitGrid(m, signals) {
   return `<table class="bitgrid">${rows.join('')}</table>`;
 }
 
+function nodeChecklist(id, selected, attr) {
+  const names = state.db.nodes.map((n) => n.name);
+  const label = selected.length ? selected.join(', ') : '—';
+  return `<details class="pick"><summary>${esc(label)}</summary><div class="pick-list" ${attr}>
+    ${names.map((n) => `<label><input type="checkbox" value="${esc(n)}" ${selected.includes(n) ? 'checked' : ''}> ${esc(n)}</label>`).join('')}
+    ${names.length ? '' : '<span class="muted">No nodes yet (Nodes tab).</span>'}</div></details>`;
+}
+
 function renderMessage() {
   const el = $('#message-detail');
   const m = state.db.messages.find((x) => x.frame_id === state.selected);
@@ -117,44 +149,143 @@ function renderMessage() {
   const curMux = state.mux[m.frame_id] ?? vals[0];
   const muxSig = m.signals.find((s) => s.is_multiplexer);
   const muxLabel = (v) => (muxSig && muxSig.choices && muxSig.choices[v]) ? `${v}: ${muxSig.choices[v]}` : String(v);
+  const tableNames = Object.keys(state.db.value_tables);
+  const sendTypes = state.db.send_types || [];
 
   el.innerHTML = `
-    <h2>${esc(m.name)} <span class="muted mono">${esc(m.hex_id)}</span></h2>
-    <div class="props">
-      <div><label>Frame ID</label><span class="mono">${esc(m.hex_id)} (${m.frame_id})${m.is_extended ? ' · extended' : ''}</span></div>
-      <div><label>Length (DLC)</label>${m.length} bytes${m.is_fd ? ' · CAN FD' : ''}</div>
-      <div><label>Sender</label>${esc(m.senders.join(', ') || '—')}</div>
-      <div><label>Send type</label>${esc(m.send_type || 'Cyclic (default)')}</div>
-      <div><label>Cycle time</label>${m.cycle_time ? m.cycle_time + ' ms (' + fmt(1000 / m.cycle_time) + ' Hz)' : '—'}</div>
-      <div><label>Signals</label>${m.signals.length}</div>
+    <div class="msg-head">
+      <h2>${esc(m.name)} <span class="muted mono">${esc(m.hex_id)}</span></h2>
+      <span class="spacer"></span>
+      <button id="msg-dup">Duplicate</button>
+      <button id="msg-del" class="danger">Delete</button>
     </div>
-    ${m.comment ? `<div class="comment">${esc(m.comment)}</div>` : ''}
+    <div class="props edit">
+      <div><label>Name</label><input type="text" data-m="name" value="${esc(m.name)}"></div>
+      <div><label>Frame ID (hex)</label><input type="text" class="mono" data-m="frame_id" value="${m.frame_id.toString(16).toUpperCase()}"></div>
+      <div><label>Extended ID</label><input type="checkbox" data-m="is_extended" ${m.is_extended ? 'checked' : ''}></div>
+      <div><label>Length (bytes)</label><input type="number" min="0" max="${m.is_fd ? 64 : 8}" data-m="length" value="${m.length}"></div>
+      <div><label>Sender</label>${nodeChecklist('s', m.senders, 'data-pick="senders"')}</div>
+      <div><label>Send type</label><select data-m="send_type">
+        ${m.send_type ? '' : '<option value="">Cyclic (default)</option>'}
+        ${sendTypes.map((t) => `<option ${t === m.send_type ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+      <div><label>Cycle time (ms)${m.cycle_time ? ' · ' + fmt(1000 / m.cycle_time) + ' Hz' : ''}</label>
+        <input type="number" min="1" data-m="cycle_time" value="${m.cycle_time ?? ''}"></div>
+      <div><label>Signals</label>${m.signals.length}${m.is_fd ? ' · CAN FD' : ''}</div>
+    </div>
+    <label class="block">Comment <textarea data-m="comment" rows="2">${esc(m.comment)}</textarea></label>
     ${vals.length ? `<div class="mux-select">Multiplexer value:
         <select id="mux-select">${vals.map((v) => `<option value="${v}" ${v === curMux ? 'selected' : ''}>${esc(muxLabel(v))}</option>`).join('')}</select></div>` : ''}
     <div class="layout-wrap">
       ${bitGrid(m, sigs)}
       <div class="legend">${sigs.map((s) => `<span data-sig="${esc(s.name)}"><i class="swatch" style="background:${colourFor(m.signals.indexOf(s))}"></i>${esc(s.name)}</span>`).join('')}</div>
     </div>
-    <div class="scroll"><table class="grid-table">
+    <div class="msg-head"><h3>Signals</h3><span class="spacer"></span><button id="sig-add">Add signal</button></div>
+    <div class="scroll"><table class="grid-table edit-table">
       <tr><th>Signal</th><th>Start</th><th>Len</th><th>Order</th><th>Type</th><th>Factor</th><th>Offset</th>
-          <th>Min</th><th>Max</th><th>Unit</th><th>Start value</th><th>Receivers</th><th>Values</th><th>Comment</th></tr>
+          <th>Min</th><th>Max</th><th>Unit</th><th>Start value (raw)</th><th>Receivers</th><th>Values</th><th>Comment</th><th></th></tr>
       ${sigs.map((s) => `<tr data-sig="${esc(s.name)}" class="${state.highlight === s.name ? 'hl' : ''}">
-        <td><i class="swatch" style="background:${colourFor(m.signals.indexOf(s))}"></i> ${esc(s.name)}${s.is_multiplexer ? ' <b>(mux)</b>' : ''}</td>
-        <td class="num">${s.start}</td><td class="num">${s.length}</td>
-        <td>${s.byte_order === 'little_endian' ? 'Intel' : 'Motorola'}</td>
-        <td>${s.is_float ? 'float' : (s.is_signed ? 'signed' : 'unsigned')}</td>
-        <td class="num">${fmt(s.scale)}</td><td class="num">${fmt(s.offset)}</td>
-        <td class="num">${fmt(s.minimum)}</td><td class="num">${fmt(s.maximum)}</td>
-        <td>${esc(s.unit)}</td><td class="num">${fmt(s.initial)}</td>
-        <td>${esc(s.receivers.join(', '))}</td>
-        <td class="choices">${s.value_table ? '<b>' + esc(s.value_table) + '</b><br>' : ''}${s.choices ? Object.entries(s.choices).map(([k, v]) => esc(k + ' = ' + v)).join('<br>') : ''}</td>
-        <td>${esc(s.comment)}</td></tr>`).join('')}
+        <td class="name-cell"><i class="swatch" style="background:${colourFor(m.signals.indexOf(s))}"></i>
+          <input type="text" data-s="name" value="${esc(s.name)}" class="w-name">${s.is_multiplexer ? ' <b>(mux)</b>' : ''}</td>
+        <td><input type="number" data-s="start" value="${s.start}" class="w-num"></td>
+        <td><input type="number" data-s="length" value="${s.length}" class="w-num"></td>
+        <td><select data-s="byte_order"><option value="little_endian" ${s.byte_order === 'little_endian' ? 'selected' : ''}>Intel</option>
+            <option value="big_endian" ${s.byte_order === 'big_endian' ? 'selected' : ''}>Motorola</option></select></td>
+        <td><select data-s="type"><option ${!s.is_float && !s.is_signed ? 'selected' : ''} value="unsigned">unsigned</option>
+            <option ${!s.is_float && s.is_signed ? 'selected' : ''} value="signed">signed</option>
+            <option ${s.is_float ? 'selected' : ''} value="float">float</option></select></td>
+        <td><input type="number" step="any" data-s="scale" value="${fmt(s.scale)}" class="w-num"></td>
+        <td><input type="number" step="any" data-s="offset" value="${fmt(s.offset)}" class="w-num"></td>
+        <td><input type="number" step="any" data-s="minimum" value="${fmt(s.minimum)}" class="w-num" title="raw range gives ${fmt(s.raw_min)}…${fmt(s.raw_max)} before factor and offset"></td>
+        <td><input type="number" step="any" data-s="maximum" value="${fmt(s.maximum)}" class="w-num"></td>
+        <td><input type="text" data-s="unit" value="${esc(s.unit)}" class="w-unit"></td>
+        <td><input type="number" step="any" data-s="initial" value="${fmt(s.initial)}" class="w-num"></td>
+        <td>${nodeChecklist('r', s.receivers, 'data-pick="receivers"')}</td>
+        <td class="choices">${s.value_table ? '<b>' + esc(s.value_table) + '</b><br>' : ''}
+          <textarea data-s="choices" rows="${Math.max(1, Math.min(6, Object.keys(s.choices || {}).length))}" placeholder="0 = label">${esc(Object.entries(s.choices || {}).map(([k, v]) => k + ' = ' + v).join('\n'))}</textarea>
+          ${tableNames.length ? `<select data-s="apply_table"><option value="">use table…</option>${tableNames.map((t) => `<option>${esc(t)}</option>`).join('')}</select>` : ''}</td>
+        <td><textarea data-s="comment" rows="1">${esc(s.comment)}</textarea></td>
+        <td><button data-s-del title="Delete signal" class="danger">✕</button></td></tr>`).join('')}
     </table></div>`;
 
   const sel = $('#mux-select');
   if (sel) sel.onchange = () => { state.mux[m.frame_id] = Number(sel.value); renderMessage(); };
-  el.querySelectorAll('[data-sig]').forEach((n) => {
+  el.querySelectorAll('.legend [data-sig], .bitgrid [data-sig]').forEach((n) => {
     n.onclick = () => { state.highlight = state.highlight === n.dataset.sig ? null : n.dataset.sig; renderMessage(); };
+  });
+
+  // message fields
+  el.querySelectorAll('[data-m]').forEach((inp) => {
+    inp.onchange = () => {
+      const field = inp.dataset.m;
+      let value = inp.type === 'checkbox' ? inp.checked : inp.value;
+      if (field === 'frame_id') value = parseInt(value, 16);
+      else if (field === 'length' || field === 'cycle_time') value = Number(value);
+      doOp({ op: 'message.set', frame_id: m.frame_id, field, value });
+    };
+  });
+  el.querySelectorAll('.props [data-pick]').forEach((box) => {
+    box.onchange = () => doOp({ op: 'message.set', frame_id: m.frame_id, field: 'senders',
+      value: [...box.querySelectorAll('input:checked')].map((i) => i.value) });
+  });
+  $('#msg-dup').onclick = () => {
+    const name = prompt('Name of the copy', m.name + '_copy');
+    if (!name) return;
+    const id = prompt('Frame ID of the copy (hex)', (m.frame_id + 1).toString(16).toUpperCase());
+    if (!id) return;
+    doOp({ op: 'message.duplicate', frame_id: m.frame_id, name, new_frame_id: parseInt(id, 16) });
+  };
+  $('#msg-del').onclick = () => {
+    if (!confirm(`Delete ${m.name} and its ${m.signals.length} signals? Undo can bring it back.`)) return;
+    state.selected = null;
+    doOp({ op: 'message.delete', frame_id: m.frame_id });
+  };
+  $('#sig-add').onclick = () => {
+    const name = prompt('Name of the new signal');
+    if (!name) return;
+    const used = new Set(m.signals.flatMap((s) => s.bits));
+    let start = 0;
+    while (used.has(start) && start < m.length * 8) start++;
+    doOp({ op: 'signal.add', frame_id: m.frame_id, name, start: Math.min(start, Math.max(m.length * 8 - 1, 0)), length: 1 });
+  };
+
+  // signal fields
+  el.querySelectorAll('tr[data-sig]').forEach((row) => {
+    const sig = row.dataset.sig;
+    const base = { frame_id: m.frame_id, name: sig };
+    row.querySelectorAll('[data-s]').forEach((inp) => {
+      inp.onfocus = () => { if (state.highlight !== sig) { state.highlight = sig; } };
+      inp.onchange = async () => {
+        const f = inp.dataset.s;
+        if (f === 'type') {
+          if (inp.value === 'float') return void doOp({ op: 'signal.set', ...base, field: 'is_float', value: true });
+          if (!(await doOp({ op: 'signal.set', ...base, field: 'is_float', value: false }))) return;
+          return void doOp({ op: 'signal.set', ...base, field: 'is_signed', value: inp.value === 'signed' });
+        }
+        if (f === 'choices') {
+          const choices = {};
+          for (const line of inp.value.split('\n')) {
+            if (!line.trim()) continue;
+            const [k, ...rest] = line.split('=');
+            choices[k.trim()] = rest.join('=').trim();
+          }
+          return void doOp({ op: 'signal.set_choices', ...base, choices });
+        }
+        if (f === 'apply_table') {
+          if (inp.value) doOp({ op: 'signal.apply_table', ...base, table: inp.value });
+          return;
+        }
+        let value = inp.value;
+        if (['start', 'length', 'scale', 'offset'].includes(f)) value = Number(value);
+        if (['minimum', 'maximum', 'initial'].includes(f)) value = numOrNull(value);
+        const r = await doOp({ op: 'signal.set', ...base, field: f, value });
+        if (r && f === 'name') state.highlight = inp.value;
+      };
+    });
+    row.querySelector('[data-pick]').onchange = (ev) => doOp({ op: 'signal.set', ...base, field: 'receivers',
+      value: [...ev.currentTarget.querySelectorAll('input:checked')].map((i) => i.value) });
+    row.querySelector('[data-s-del]').onclick = () => {
+      if (confirm(`Delete signal ${sig}?`)) doOp({ op: 'signal.delete', ...base });
+    };
   });
 }
 
@@ -165,26 +296,72 @@ function renderNodes() {
   for (const m of state.db.messages) {
     const rx = new Set(m.signals.flatMap((s) => s.receivers));
     html += `<tr><td><span class="mono">${esc(m.hex_id)}</span> ${esc(m.name)}</td>` +
-      nodes.map((n) => `<td>${m.senders.includes(n) ? '<span class="tx">TX</span>' : (rx.has(n) ? '<span class="rx">RX</span>' : '')}</td>`).join('') +
-      '</tr>';
+      nodes.map((n) => {
+        const role = m.senders.includes(n) ? 'tx' : (rx.has(n) ? 'rx' : 'none');
+        return `<td class="cell-role" data-id="${m.frame_id}" data-node="${esc(n)}" data-role="${role}">${
+          role === 'tx' ? '<span class="tx">TX</span>' : (role === 'rx' ? '<span class="rx">RX</span>' : '')}</td>`;
+      }).join('') + '</tr>';
   }
-  $('#node-matrix').innerHTML = html;
-  $('#node-list').innerHTML = '<tr><th>Node</th><th>Sends</th><th>Comment</th></tr>' + state.db.nodes.map((n) =>
-    `<tr><td><b>${esc(n.name)}</b></td><td class="num">${state.db.messages.filter((m) => m.senders.includes(n.name)).length}</td><td>${esc(n.comment)}</td></tr>`).join('');
+  const mx = $('#node-matrix');
+  mx.innerHTML = html;
+  const next = { none: 'rx', rx: 'tx', tx: 'none' };
+  mx.querySelectorAll('.cell-role').forEach((td) => {
+    td.onclick = () => doOp({ op: 'message.set_node_role', frame_id: Number(td.dataset.id),
+      node: td.dataset.node, role: next[td.dataset.role] });
+  });
+
+  $('#node-list').innerHTML = '<tr><th>Node</th><th>Sends</th><th>Comment</th><th></th></tr>' + state.db.nodes.map((n) =>
+    `<tr data-node="${esc(n.name)}"><td><input type="text" data-n="name" value="${esc(n.name)}"></td>
+      <td class="num">${state.db.messages.filter((m) => m.senders.includes(n.name)).length}</td>
+      <td><input type="text" data-n="comment" value="${esc(n.comment)}" class="w-wide"></td>
+      <td><button class="danger" data-n-del>Delete</button></td></tr>`).join('');
+  $('#node-list').querySelectorAll('tr[data-node]').forEach((row) => {
+    const name = row.dataset.node;
+    row.querySelector('[data-n=name]').onchange = (e) => doOp({ op: 'node.rename', name, new_name: e.target.value });
+    row.querySelector('[data-n=comment]').onchange = (e) => doOp({ op: 'node.set_comment', name, comment: e.target.value });
+    row.querySelector('[data-n-del]').onclick = async () => {
+      if (!confirm(`Delete node ${name}?`)) return;
+      try {
+        await post('/api/op', { op: { op: 'node.delete', name } });
+        banner(''); await load();
+      } catch (e) {
+        if (confirm(e.message + '\n\nRemove it from all messages and signals as well?')) {
+          doOp({ op: 'node.delete', name, force: true });
+        }
+      }
+    };
+  });
 }
 
 // ---------- value tables ----------
+const parseEntries = (text) => {
+  const out = {};
+  for (const line of text.split('\n')) {
+    if (!line.trim()) continue;
+    const [k, ...rest] = line.split('=');
+    out[k.trim()] = rest.join('=').trim();
+  }
+  return out;
+};
+
 function renderValueTables() {
   const users = {};
   for (const m of state.db.messages) for (const s of m.signals) if (s.value_table) (users[s.value_table] ||= []).push(`${m.name}.${s.name}`);
   const names = Object.keys(state.db.value_tables);
-  $('#value-tables').innerHTML = names.length ? names.map((name) => `
-    <div class="vt"><h3>${esc(name)}</h3>
-      <table class="grid-table"><tr><th>Value</th><th>Label</th></tr>
-        ${Object.entries(state.db.value_tables[name]).sort((a, b) => a[0] - b[0]).map(([k, v]) => `<tr><td class="num">${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}
-      </table>
-      <p class="muted">Used by ${users[name] ? esc(users[name].join(', ')) : 'no signal'}</p>
+  const box = $('#value-tables');
+  box.innerHTML = names.length ? names.map((name) => `
+    <div class="vt" data-table="${esc(name)}">
+      <div class="msg-head"><input type="text" data-t="name" value="${esc(name)}" class="w-name">
+        <span class="spacer"></span><button class="danger" data-t-del>Delete</button></div>
+      <textarea data-t="entries" rows="${Math.min(12, Object.keys(state.db.value_tables[name]).length + 1)}">${esc(Object.entries(state.db.value_tables[name]).sort((a, b) => a[0] - b[0]).map(([k, v]) => k + ' = ' + v).join('\n'))}</textarea>
+      <p class="muted">One “value = label” per line. Used by ${users[name] ? esc(users[name].join(', ')) : 'no signal'}; saving edits also updates those signals.</p>
     </div>`).join('') : '<p class="muted">No global value tables.</p>';
+  box.querySelectorAll('.vt').forEach((vt) => {
+    const name = vt.dataset.table;
+    vt.querySelector('[data-t=name]').onchange = (e) => doOp({ op: 'table.rename', name, new_name: e.target.value });
+    vt.querySelector('[data-t=entries]').onchange = (e) => doOp({ op: 'table.set', name, entries: parseEntries(e.target.value), apply_to_signals: true });
+    vt.querySelector('[data-t-del]').onclick = () => { if (confirm(`Delete value table ${name}?`)) doOp({ op: 'table.delete', name }); };
+  });
 }
 
 // ---------- busload ----------
@@ -240,40 +417,105 @@ async function loadDeps() {
   } catch (e) { /* offline is fine */ }
 }
 
+// ---------- history, save ----------
+function renderStatus() {
+  const st = state.db.status;
+  $('#dirty').hidden = !st.dirty;
+  $('#undo-btn').disabled = !st.can_undo;
+  $('#redo-btn').disabled = !st.can_redo;
+  $('#save-btn').disabled = !st.dirty;
+  $('#generate-btn').disabled = st.dirty;
+  $('#generate-btn').title = st.dirty ? 'Save first: C is generated from the saved file' : 'Run cantools generate_c_source into src/';
+  if (st.disk_changed) banner('The DBC file changed on disk while you were editing. Saving is refused; export your work by noting it, then Reload.', 'error');
+}
+
+async function history(kind) {
+  try { await post('/api/' + kind); await load(); } catch (e) { banner(e.message, 'error'); }
+}
+
+async function save() {
+  try {
+    const r = await post('/api/save');
+    const parts = [`Saved ${r.saved}.`];
+    if (r.docs.length) parts.push('Updated cycle-time tables in ' + r.docs.join(' and ') + '.');
+    if (r.c_stale.length) parts.push('C sources are out of date (' + r.c_stale.join(', ') + '); press Generate C.');
+    if (r.warnings.length) parts.push('Note: ' + r.warnings.join(' '));
+    await load();
+    banner(parts.join(' '), r.warnings.length ? '' : 'ok');
+  } catch (e) {
+    banner('Not saved: ' + e.message, 'error');
+  }
+}
+
 // ---------- boot ----------
 async function load() {
+  const active = document.activeElement;
   state.db = await api('/api/db');
   $('#file-name').textContent = state.db.file;
-  document.title = state.db.file + ' · Binocan DBC Editor';
-  if (state.selected === null && state.db.messages.length) state.selected = state.db.messages[0].frame_id;
+  document.title = (state.db.status.dirty ? '• ' : '') + state.db.file + ' · Binocan DBC Editor';
+  if (!state.db.messages.some((m) => m.frame_id === state.selected)) {
+    state.selected = state.db.messages.length ? state.db.messages[0].frame_id : null;
+  }
+  renderStatus();
   renderMessageList();
   renderMessage();
   renderNodes();
   renderValueTables();
   await loadCheck();
   if ($('#tab-busload').classList.contains('active')) loadBusload();
+  void active;
 }
 
 async function generate() {
   const btn = $('#generate-btn');
   btn.disabled = true;
   try {
-    const r = await api('/api/generate', { method: 'POST' });
+    const r = await post('/api/generate');
     const written = [...r.created, ...r.changed];
     banner(written.length ? 'Generated: ' + written.join(', ') : 'C sources already match the DBC; nothing written.', 'ok');
   } catch (e) {
     banner('Generate failed: ' + e.message, 'error');
   } finally {
-    btn.disabled = false;
+    renderStatus();
   }
 }
 
 document.querySelectorAll('#tabs button').forEach((b) => { b.onclick = () => showTab(b.dataset.tab); });
 $('#search').oninput = renderMessageList;
-$('#reload-btn').onclick = () => load().then(() => banner('Reloaded from disk.', 'ok')).catch((e) => banner(e.message, 'error'));
+$('#reload-btn').onclick = async () => {
+  if (state.db.status.dirty && !confirm('Discard all unsaved edits and read the file again?')) return;
+  try { await post('/api/reload'); await load(); banner('Reloaded from disk.', 'ok'); } catch (e) { banner(e.message, 'error'); }
+};
 $('#generate-btn').onclick = generate;
+$('#undo-btn').onclick = () => history('undo');
+$('#redo-btn').onclick = () => history('redo');
+$('#save-btn').onclick = save;
+$('#msg-add').onclick = () => {
+  const name = prompt('Name of the new message');
+  if (!name) return;
+  const id = prompt('Frame ID (hex)');
+  if (!id) return;
+  doOp({ op: 'message.add', name, frame_id: parseInt(id, 16), length: 8 });
+};
+$('#node-add').onclick = () => {
+  const name = prompt('Name of the new node');
+  if (name) doOp({ op: 'node.add', name });
+};
+$('#table-add').onclick = () => {
+  const name = prompt('Name of the new value table');
+  if (name) doOp({ op: 'table.add', name, entries: { 0: 'Off', 1: 'On' } });
+};
 $('#baud').onchange = () => { state.baud = parseInt($('#baud').value, 10) || null; loadBusload(); };
 $('#busload-reset').onclick = () => { state.overrides = {}; state.baud = null; loadBusload(); };
+window.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.target.matches('input[type=text], textarea')) return;
+  if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); history('undo'); }
+  else if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); history('redo'); }
+  else if (e.key === 's') { e.preventDefault(); save(); }
+});
+window.addEventListener('beforeunload', (e) => {
+  if (state.db && state.db.status.dirty) { e.preventDefault(); e.returnValue = ''; }
+});
 
 if (!TOKEN) {
   banner('No session token in the URL. Open the link printed by "python -m binocan_dbc edit".', 'error');

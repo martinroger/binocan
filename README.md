@@ -70,6 +70,7 @@ The Binocan protocol defines communications for core cluster telemetry, telltale
 
 ### Core Cluster & Operational Messages
 
+<!-- dbc:cycle-table ids=0x100-0x1FF -->
 | Message Name | CAN ID (Hex) | Periodicity | Key Signals |
 | :--- | :--- | :--- | :--- |
 | **`ITF_fast_metrics`** | `0x100` | 25 ms (40 Hz) | Speed (`ITF_speed_kph`), Engine RPM (`ITF_rpm`), Gear Position (`ITF_gear_position_ST`) |
@@ -82,6 +83,7 @@ The Binocan protocol defines communications for core cluster telemetry, telltale
 | **`ITF_board_version`** | `0x130` | 1000 ms (1 Hz) | Interface Board firmware version (major, minor, patch, dirty, commit ID) |
 | **`LDB_board_version`** | `0x131` | 1000 ms (1 Hz) | Left Display Board firmware version |
 | **`RDB_board_version`** | `0x132` | 1000 ms (1 Hz) | Right Display Board firmware version |
+<!-- /dbc:cycle-table -->
 
 Additional message groups include **External Metrics** (`0x200`–`0x201`), **Diagnostic Debug** (`0x300`–`0x305`), **RaceBox Telemetry** (`0x666`–`0x66B`, plus optional fusion frames `0x66C`–`0x670`), and **UDS Diagnostics** (`0x780`–`0x787`). For full architectural details, signal specifications, and diagrams, see [TOO.MD](TOO.MD).
 
