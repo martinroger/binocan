@@ -71,6 +71,46 @@ def message_json(db: Database, m: Message) -> Dict[str, Any]:
     }
 
 
+SCOPE_OF_KIND = {None: "network", "BU_": "node", "BO_": "message", "SG_": "signal"}
+
+
+def _shown(defn, attr) -> Any:
+    """An attribute value as the user reads it (enum choices as text)."""
+    if defn.type_name == "ENUM" and isinstance(attr.value, int) and 0 <= attr.value < len(defn.choices):
+        return defn.choices[attr.value]
+    return attr.value
+
+
+def attributes_json(db: Database) -> Dict[str, Any]:
+    """Attribute definitions and the values set on the database, nodes, messages and signals."""
+    from .ops import MANAGED_ATTRIBUTES
+    if db.dbc is None:
+        return {"definitions": [], "values": []}
+    defs = db.dbc.attribute_definitions
+    definitions = [{
+        "name": d.name, "scope": SCOPE_OF_KIND.get(d.kind, "network"), "type": d.type_name,
+        "minimum": d.minimum, "maximum": d.maximum, "choices": list(d.choices or []),
+        "default": d.default_value, "managed": d.name in MANAGED_ATTRIBUTES,
+    } for d in defs.values()]
+    values = []
+
+    def collect(holder, scope, where):
+        for name, attr in ((holder.dbc.attributes if holder.dbc else {}) or {}).items():
+            d = defs.get(name)
+            if d is None or name in MANAGED_ATTRIBUTES:
+                continue
+            values.append({**where, "scope": scope, "name": name, "value": _shown(d, attr)})
+
+    collect(db, "network", {"label": "network"})
+    for n in db.nodes:
+        collect(n, "node", {"node": n.name, "label": n.name})
+    for m in sorted(db.messages, key=lambda x: x.frame_id):
+        collect(m, "message", {"frame_id": m.frame_id, "label": m.name})
+        for sg in m.signals:
+            collect(sg, "signal", {"frame_id": m.frame_id, "signal": sg.name, "label": f"{m.name}.{sg.name}"})
+    return {"definitions": definitions, "values": values}
+
+
 def database_json(db: Database) -> Dict[str, Any]:
     tables = {}
     if db.dbc is not None and db.dbc.value_tables:
@@ -86,6 +126,7 @@ def database_json(db: Database) -> Dict[str, Any]:
         "nodes": [{"name": n.name, "comment": n.comment or ""} for n in db.nodes],
         "value_tables": tables,
         "send_types": send_types,
+        "attributes": attributes_json(db),
         "messages": sorted((message_json(db, m) for m in db.messages),
                            key=lambda m: m["frame_id"]),
     }

@@ -99,6 +99,14 @@ class Session:
             db, _ = self.current()
             return merge.analyse(db, merge.parse(text))
 
+    def compare_with(self, text: str, against: str = "working") -> Dict[str, Any]:
+        """Differences from the working copy (or the saved file) to the given DBC text."""
+        from . import compare, merge
+        with self._lock:
+            db, _ = self.current()
+            base = db if against == "working" else self._parse(self.saved_text)
+            return compare.compare(base, merge.parse(text))
+
     # ---------- editing ----------
 
     def apply(self, op: Dict[str, Any]) -> Dict[str, Any]:

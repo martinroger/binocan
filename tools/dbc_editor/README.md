@@ -65,6 +65,17 @@ session token; nothing else on the machine or in the browser can call it.
   send type and cycle time are carried over as message attributes, since attribute
   definitions differ between DBCs; the list shows what is not copied. A merge is one
   undoable edit.
+- **Multiplexing**: the Mux column of the signal table makes a signal the message's
+  multiplexer (one per message), or multiplexes it by listing the multiplexer values
+  that carry it. Values must fit the multiplexer's bit length; a multiplexer that
+  still carries signals cannot be turned back into a plain signal.
+- **Compare**: shows how this DBC differs from another file, or what saving would
+  change (unsaved version against the saved file): messages only on one side,
+  changed messages with the changed fields and signals, value tables and nodes.
+- **Attributes**: define user attributes for the network, nodes, messages or
+  signals (integer, hex, float, string or enumeration), change their defaults, set
+  or remove their values and delete them. Cycle time, send type, start value and
+  baudrate are managed elsewhere and shown read only.
 - **Busload**: live load of the working copy, with what-if cycle times and bitrate.
 - **Check**: the consistency issues, refreshed after every edit.
 - **Undo / Redo** (Ctrl+Z, Ctrl+Y), **Save** (Ctrl+S) and **Generate C**,

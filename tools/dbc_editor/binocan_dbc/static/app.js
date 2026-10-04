@@ -190,7 +190,7 @@ function renderMessage() {
     <div class="msg-head"><h3>Signals</h3><span class="spacer"></span><button id="sig-add">Add signal</button></div>
     <div class="scroll"><table class="grid-table edit-table">
       <tr><th>Signal</th><th>Start</th><th>Len</th><th>Order</th><th>Type</th><th>Factor</th><th>Offset</th>
-          <th>Min</th><th>Max</th><th>Unit</th><th>Start value (raw)</th><th>Receivers</th><th>Values</th><th>Comment</th><th></th></tr>
+          <th>Min</th><th>Max</th><th>Unit</th><th>Start value (raw)</th><th>Mux</th><th>Receivers</th><th>Values</th><th>Comment</th><th></th></tr>
       ${sigs.map((s) => `<tr data-sig="${esc(s.name)}" class="${state.highlight === s.name ? 'hl' : ''}">
         <td class="name-cell"><i class="swatch" style="background:${colourFor(m.signals.indexOf(s))}"></i>
           <input type="text" data-s="name" value="${esc(s.name)}" class="w-name">${s.is_multiplexer ? ' <b>(mux)</b>' : ''}</td>
@@ -207,6 +207,11 @@ function renderMessage() {
         <td><input type="number" step="any" data-s="maximum" value="${fmt(s.maximum)}" class="w-num"></td>
         <td><input type="text" data-s="unit" value="${esc(s.unit)}" class="w-unit"></td>
         <td><input type="number" step="any" data-s="initial" value="${fmt(s.initial)}" class="w-num"></td>
+        <td class="mux-cell"><select data-s="muxrole">
+            <option value="plain" ${!s.is_multiplexer && !s.multiplexer_ids ? 'selected' : ''}>plain</option>
+            <option value="multiplexer" ${s.is_multiplexer ? 'selected' : ''}>multiplexer</option>
+            <option value="multiplexed" ${s.multiplexer_ids ? 'selected' : ''}>multiplexed</option></select>
+          ${s.multiplexer_ids ? `<input type="text" data-s="muxids" class="w-num" value="${esc(s.multiplexer_ids.join(','))}" title="Values of ${esc(s.multiplexer_signal)} that carry this signal, comma separated">` : ''}</td>
         <td>${nodeChecklist('r', s.receivers, 'data-pick="receivers"')}</td>
         <td class="choices">${s.value_table ? '<b>' + esc(s.value_table) + '</b><br>' : ''}
           <textarea data-s="choices" rows="${Math.max(1, Math.min(6, Object.keys(s.choices || {}).length))}" placeholder="0 = label">${esc(Object.entries(s.choices || {}).map(([k, v]) => k + ' = ' + v).join('\n'))}</textarea>
@@ -320,6 +325,7 @@ function renderMessage() {
   el.querySelectorAll('tr[data-sig]').forEach((row) => {
     const sig = row.dataset.sig;
     const base = { frame_id: m.frame_id, name: sig };
+    const s0 = m.signals.find((x) => x.name === sig);
     row.querySelectorAll('[data-s]').forEach((inp) => {
       inp.onfocus = () => { if (state.highlight !== sig) { state.highlight = sig; } };
       inp.onchange = async () => {
@@ -328,6 +334,22 @@ function renderMessage() {
           if (inp.value === 'float') return void doOp({ op: 'signal.set', ...base, field: 'is_float', value: true });
           if (!(await doOp({ op: 'signal.set', ...base, field: 'is_float', value: false }))) return;
           return void doOp({ op: 'signal.set', ...base, field: 'is_signed', value: inp.value === 'signed' });
+        }
+        if (f === 'muxrole') {
+          const cur = s0.multiplexer_ids ? 'multiplexed' : (s0.is_multiplexer ? 'multiplexer' : 'plain');
+          const set = (field, value) => doOp({ op: 'signal.set', ...base, field, value });
+          if (inp.value === cur) return;
+          const quiet = async (field, value) => { try { await post('/api/op', { op: { op: 'signal.set', ...base, field, value } }); return true; } catch (e) { banner(e.message, 'error'); return false; } };
+          let ok = true;
+          if (cur === 'multiplexed') ok = await quiet('multiplexer_ids', null);
+          if (ok && cur === 'multiplexer') ok = await quiet('is_multiplexer', false);
+          if (ok && inp.value === 'multiplexer') ok = await quiet('is_multiplexer', true);
+          if (ok && inp.value === 'multiplexed') ok = await quiet('multiplexer_ids', [0]);
+          return void load();
+        }
+        if (f === 'muxids') {
+          const ids = inp.value.split(',').map((x) => x.trim()).filter(Boolean).map(Number);
+          return void doOp({ op: 'signal.set', ...base, field: 'multiplexer_ids', value: ids });
         }
         if (f === 'choices') {
           const choices = {};
@@ -581,6 +603,121 @@ $('#merge-upload').onchange = async (e) => {
   analyseMerge({ text }, f.name);
 };
 
+// ---------- compare ----------
+async function loadCompareFiles() {
+  const files = await api('/api/merge/files');
+  $('#compare-file').innerHTML = '<option value="">choose…</option>' + files.map((f) => `<option>${esc(f.name)}</option>`).join('');
+}
+
+async function runCompare(body, label) {
+  try {
+    const r = await post('/api/compare', body);
+    const list = (title, items, fmt = esc) => items.length ? `<h3>${title} (${items.length})</h3><ul>${items.map((i) => `<li>${fmt(i)}</li>`).join('')}</ul>` : '';
+    const msgLine = (m) => `<span class="mono">${esc(m.hex_id)}</span> <b>${esc(m.name)}</b> <span class="muted">${m.signal_count} signals</span>`;
+    const left = body.against === 'saved' ? 'the saved file' : 'this DBC';
+    const right = body.against === 'saved' ? 'your unsaved version' : label;
+    $('#compare-result').innerHTML = r.same ? `<p>${esc(label)}: no differences.</p>` : `
+      <p class="muted">Changes going from ${esc(left)} to ${esc(right)}.</p>
+      ${list('Messages only in ' + left, r.messages_only_here, msgLine)}
+      ${list('Messages only in ' + right, r.messages_only_there, msgLine)}
+      ${r.messages_changed.length ? `<h3>Changed messages (${r.messages_changed.length})</h3>` + r.messages_changed.map((m) =>
+        `<div class="vt"><b>${esc(m.name)}</b> <span class="mono muted">${esc(m.hex_id)}</span><ul>${m.changes.map((c) => `<li>${esc(c)}</li>`).join('')}</ul></div>`).join('') : ''}
+      ${list('Value tables only in ' + left, r.tables_only_here)}
+      ${list('Value tables only in ' + right, r.tables_only_there)}
+      ${list('Value tables with other entries', r.tables_changed)}
+      ${list('Nodes only in ' + left, r.nodes_only_here)}
+      ${list('Nodes only in ' + right, r.nodes_only_there)}`;
+    banner('');
+  } catch (e) { banner(e.message, 'error'); }
+}
+
+$('#compare-saved').onclick = () => runCompare({ against: 'saved' }, 'unsaved changes');
+$('#compare-file').onchange = (e) => { if (e.target.value) runCompare({ file: e.target.value }, e.target.value); };
+$('#compare-upload').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  runCompare({ text: new TextDecoder('windows-1252').decode(await f.arrayBuffer()) }, f.name);
+};
+
+// ---------- attributes ----------
+function renderAttributes() {
+  const a = state.db.attributes;
+  const defs = a.definitions;
+  const range = (d) => d.type === 'ENUM' ? d.choices.join(', ') : (d.type === 'STRING' ? '' : `${fmt(d.minimum)} … ${fmt(d.maximum)}`);
+  const input = (d, value, attr) => d.type === 'ENUM'
+    ? `<select ${attr}>${d.choices.map((c) => `<option ${c === value ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>`
+    : `<input type="${d.type === 'STRING' ? 'text' : 'number'}" step="any" ${attr} value="${esc(fmt(value))}">`;
+  $('#attr-defs').innerHTML = `<h3>Definitions</h3><div class="scroll"><table class="grid-table">
+    <tr><th>Name</th><th>Applies to</th><th>Type</th><th>Range or choices</th><th>Default</th><th></th></tr>
+    ${defs.map((d) => `<tr data-def="${esc(d.name)}"><td><b>${esc(d.name)}</b></td><td>${esc(d.scope)}</td><td>${esc(d.type)}</td>
+      <td class="choices">${esc(range(d))}</td>
+      <td>${d.managed ? esc(fmt(d.default)) : input(d, d.default, 'data-a="default"')}</td>
+      <td>${d.managed ? '<span class="muted">managed</span>' : '<button class="danger" data-a-del>Delete</button>'}</td></tr>`).join('')}
+    <tr id="attr-new"><td><input type="text" data-n="name" class="w-name" placeholder="NewAttribute"></td>
+      <td><select data-n="scope"><option>network</option><option>node</option><option>message</option><option>signal</option></select></td>
+      <td><select data-n="type"><option>INT</option><option>HEX</option><option>FLOAT</option><option>STRING</option><option>ENUM</option></select></td>
+      <td><input type="text" data-n="range" class="w-wide" placeholder="min,max or choice,choice,…"></td>
+      <td><input type="text" data-n="default" class="w-num" placeholder="default"></td>
+      <td><button id="attr-add">Add</button></td></tr>
+  </table></div>`;
+  $('#attr-defs').querySelectorAll('tr[data-def]').forEach((row) => {
+    const name = row.dataset.def;
+    const def = defs.find((d) => d.name === name);
+    const inp = row.querySelector('[data-a=default]');
+    if (inp) inp.onchange = () => doOp({ op: 'attribute.set_default', name,
+      value: def.type === 'ENUM' || def.type === 'STRING' ? inp.value : Number(inp.value) });
+    const del = row.querySelector('[data-a-del]');
+    if (del) del.onclick = () => { if (confirm(`Delete attribute ${name} and all its values?`)) doOp({ op: 'attribute.delete', name }); };
+  });
+  $('#attr-add').onclick = () => {
+    const get = (k) => $('#attr-new').querySelector(`[data-n=${k}]`).value.trim();
+    const type = get('type');
+    const op = { op: 'attribute.define', name: get('name'), scope: get('scope'), type };
+    if (type === 'ENUM') op.choices = get('range').split(',').map((x) => x.trim()).filter(Boolean);
+    else if (type !== 'STRING') { const [lo, hi] = get('range').split(',').map(Number); op.minimum = lo; op.maximum = hi; }
+    if (get('default') !== '') op.default = type === 'INT' || type === 'HEX' || type === 'FLOAT' ? Number(get('default')) : get('default');
+    doOp(op);
+  };
+
+  const custom = defs.filter((d) => !d.managed);
+  const targetsFor = (d) => {
+    if (d.scope === 'network') return [{ label: 'network', t: {} }];
+    if (d.scope === 'node') return state.db.nodes.map((n) => ({ label: n.name, t: { node: n.name } }));
+    if (d.scope === 'message') return state.db.messages.map((m) => ({ label: m.name, t: { frame_id: m.frame_id } }));
+    return state.db.messages.flatMap((m) => m.signals.map((sg) => ({ label: `${m.name}.${sg.name}`, t: { frame_id: m.frame_id, signal: sg.name } })));
+  };
+  $('#attr-values').innerHTML = custom.length ? `<h3>Values</h3><div class="scroll"><table class="grid-table">
+    <tr><th>Attribute</th><th>Object</th><th>Value</th><th></th></tr>
+    ${a.values.map((v, i) => `<tr data-val="${i}"><td>${esc(v.name)}</td><td>${esc(v.label)}</td>
+      <td>${input(defs.find((d) => d.name === v.name), v.value, 'data-v="value"')}</td><td><button class="danger" data-v-del>Remove</button></td></tr>`).join('')}
+    <tr id="val-new"><td><select data-w="name">${custom.map((d) => `<option>${esc(d.name)}</option>`).join('')}</select></td>
+      <td><select data-w="target"></select></td><td><span id="val-input"></span></td><td><button id="val-add">Set</button></td></tr>
+  </table></div>` : '<p class="muted">Define an attribute above to set values for it.</p>';
+  if (!custom.length) return;
+  a.values.forEach((v, i) => {
+    const row = $('#attr-values').querySelector(`tr[data-val="${i}"]`);
+    const def = defs.find((d) => d.name === v.name);
+    const target = { frame_id: v.frame_id, signal: v.signal, node: v.node };
+    row.querySelector('[data-v=value]').onchange = (e) => doOp({ op: 'attribute.set', name: v.name, ...target,
+      value: def.type === 'ENUM' || def.type === 'STRING' ? e.target.value : Number(e.target.value) });
+    row.querySelector('[data-v-del]').onclick = () => doOp({ op: 'attribute.set', name: v.name, ...target, value: null });
+  });
+  const fill = () => {
+    const d = custom.find((x) => x.name === $('#val-new [data-w=name]').value);
+    const ts = targetsFor(d);
+    $('#val-new [data-w=target]').innerHTML = ts.map((t, i) => `<option value="${i}">${esc(t.label)}</option>`).join('');
+    $('#val-input').innerHTML = input(d, d.type === 'ENUM' ? d.choices[0] : '', 'data-w="value"');
+    $('#val-add').onclick = () => {
+      const t = ts[Number($('#val-new [data-w=target]').value)];
+      if (!t) return;
+      const raw = $('#val-new [data-w=value]').value;
+      doOp({ op: 'attribute.set', name: d.name, ...t.t, value: d.type === 'ENUM' || d.type === 'STRING' ? raw : Number(raw) });
+    };
+  };
+  $('#val-new [data-w=name]').onchange = fill;
+  fill();
+}
+
 // ---------- history, save ----------
 function renderStatus() {
   const st = state.db.status;
@@ -625,6 +762,7 @@ async function load() {
   renderMessage();
   renderNodes();
   renderValueTables();
+  renderAttributes();
   await loadCheck();
   if ($('#tab-busload').classList.contains('active')) loadBusload();
   void active;
@@ -690,5 +828,6 @@ if (!TOKEN) {
     if (tab && document.getElementById('tab-' + tab)) showTab(tab);
     loadDeps();
     loadMergeFiles().catch(() => {});
+    loadCompareFiles().catch(() => {});
   }).catch((e) => banner('Could not load the DBC: ' + e.message, 'error'));
 }
