@@ -15,5 +15,7 @@ targets:
   - esp32p4
 files:
   use_gitignore: true
+  exclude:
+    - "tools/**"
 dependencies:
   idf: ">=5.5.5"

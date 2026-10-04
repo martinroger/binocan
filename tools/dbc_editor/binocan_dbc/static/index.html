@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binocan DBC Editor</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">DBC</span> <span id="file-name">loading…</span></div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="messages" class="active">Messages</button>
+    <button data-tab="nodes">Nodes</button>
+    <button data-tab="tables">Value tables</button>
+    <button data-tab="busload">Busload</button>
+    <button data-tab="check">Check <span id="check-badge" class="badge" hidden></span></button>
+  </nav>
+  <div class="actions">
+    <button id="reload-btn" title="Reload the DBC from disk">Reload</button>
+    <button id="generate-btn" class="primary" title="Run cantools generate_c_source into src/">Generate C</button>
+  </div>
+</header>
+<div id="banner" class="banner" hidden></div>
+
+<main>
+  <section id="tab-messages" class="tab active">
+    <aside class="sidebar">
+      <input id="search" type="search" placeholder="Search messages, IDs, signals">
+      <ul id="message-list"></ul>
+    </aside>
+    <div class="detail" id="message-detail"><p class="muted">Pick a message.</p></div>
+  </section>
+
+  <section id="tab-nodes" class="tab">
+    <h2>Node matrix</h2>
+    <p class="muted">TX: the node sends the message. RX: the node receives at least one of its signals.</p>
+    <div class="scroll"><table id="node-matrix" class="grid-table"></table></div>
+    <h2>Nodes</h2>
+    <table id="node-list" class="grid-table"></table>
+  </section>
+
+  <section id="tab-tables" class="tab">
+    <h2>Global value tables</h2>
+    <div id="value-tables"></div>
+  </section>
+
+  <section id="tab-busload" class="tab">
+    <h2>Busload</h2>
+    <p class="muted">Messages sent strictly on request are excluded. Cycle-time edits here are what-if only and are not saved.</p>
+    <div class="busload-controls">
+      <label>Bitrate (bit/s) <input id="baud" type="number" min="10000" step="1000"></label>
+      <button id="busload-reset">Reset what-ifs</button>
+    </div>
+    <div id="busload-summary" class="summary"></div>
+    <div class="scroll"><table id="busload-table" class="grid-table"></table></div>
+    <div id="busload-excluded" class="muted"></div>
+  </section>
+
+  <section id="tab-check" class="tab">
+    <h2>Consistency check</h2>
+    <div id="check-list"></div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
