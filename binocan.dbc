@@ -226,6 +226,51 @@ BO_ 1643 RBX_UTC_TIME: 8 RBX
  SG_ RBX_UTC_second : 48|8@1+ (1,0) [0|59] "s"  external
  SG_ RBX_UTC_centisecond : 56|8@1+ (0.01,0) [0|0.99] "s"  external
 
+BO_ 1644 RBX_FUS_STATE: 8 RBX
+ SG_ RBX_fus_state_ST : 0|3@1+ (1,0) [0|4] ""  external
+ SG_ RBX_fus_level_source_ST : 3|2@1+ (1,0) [0|3] ""  external
+ SG_ RBX_fus_yaw_resolved : 5|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_stationary : 6|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_gnss_ok : 7|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_speed_valid : 8|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_heading_ok : 9|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_yaw_long_valid : 10|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_yaw_lat_valid : 11|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_standstill_valid : 12|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_cruise_valid : 13|1@1+ (1,0) [0|1] ""  external
+ SG_ RBX_fus_confidence_pc : 16|8@1+ (1,0) [0|100] "pc"  external
+ SG_ RBX_fus_level_confidence_pc : 24|8@1+ (1,0) [0|100] "pc"  external
+ SG_ RBX_fus_yaw_confidence_pc : 32|8@1+ (1,0) [0|100] "pc"  external
+ SG_ RBX_fus_input_score_pc : 40|8@1+ (1,0) [0|100] "pc"  external
+ SG_ RBX_fus_stops_count : 48|4@1+ (1,0) [0|15] ""  external
+ SG_ RBX_fus_level_outliers : 52|4@1+ (1,0) [0|15] ""  external
+ SG_ RBX_fus_counter : 56|8@1+ (1,0) [0|255] ""  external
+
+BO_ 1645 RBX_FUS_KINEMATICS: 8 RBX
+ SG_ RBX_fus_speed_kph : 0|16@1+ (0.01,0) [0|655.35] "km/h"  external
+ SG_ RBX_fus_heading_deg : 16|16@1+ (0.01,0) [0|655.35] "deg"  external
+ SG_ RBX_fus_heading_rate_dps : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_fus_accel_gnss_long_g : 48|16@1- (0.001,0) [-32.768|32.767] "g"  external
+
+BO_ 1646 RBX_FUS_ACCEL_VEH: 8 RBX
+ SG_ RBX_fus_accel_X_g : 0|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_fus_accel_Y_g : 16|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_fus_accel_Z_g : 32|16@1- (0.001,0) [-32.768|32.767] "g"  external
+ SG_ RBX_fus_gravity_g : 48|16@1+ (0.001,0) [0|65.535] "g"  external
+
+BO_ 1647 RBX_FUS_GYRO_VEH: 8 RBX
+ SG_ RBX_fus_rot_rate_X : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_fus_rot_rate_Y : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_fus_rot_rate_Z : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s"  external
+ SG_ RBX_fus_yaw_sigma_deg : 48|16@1+ (0.01,0) [0|655.35] "deg"  external
+
+BO_ 1648 RBX_FUS_MOUNT: 8 RBX
+ SG_ RBX_fus_mount_roll_deg : 0|16@1- (0.01,0) [-327.68|327.67] "deg"  external
+ SG_ RBX_fus_mount_pitch_deg : 16|16@1- (0.01,0) [-327.68|327.67] "deg"  external
+ SG_ RBX_fus_mount_yaw_deg : 32|16@1- (0.01,0) [-327.68|327.67] "deg"  external
+ SG_ RBX_fus_accel_gain : 48|8@1+ (0.01,0) [0|2.55] ""  external
+ SG_ RBX_fus_turn_axis_error_deg : 56|8@1+ (1,0) [0|255] "deg"  external
+
 
 
 CM_ BU_ EXT "Extension controller";
@@ -310,6 +355,13 @@ CM_ BO_ 1640 "RaceBox GPS MSL Altitude, Horizontal Positional Accuracy, and PDOP
 CM_ BO_ 1641 "RaceBox 3-Axis Accelerometer (G-force), Battery Percentage, and Rolling Counter";
 CM_ BO_ 1642 "RaceBox 3-Axis Gyroscope Angular Rotation Rates (Roll, Pitch, Yaw)";
 CM_ BO_ 1643 "RaceBox GPS UTC Date, Time of Day, and Fractional Centiseconds";
+CM_ BO_ 1644 "Optional (fusion enabled): alignment state machine, validity flags, plausibility scores, rolling counter shared with RBX_IMU_ACCEL";
+CM_ BO_ 1645 "Optional (fusion enabled): filtered speed, heading of motion, heading rate (clockwise positive) and GNSS-derived longitudinal acceleration";
+CM_ BO_ 1646 "Optional (fusion enabled): specific force in the vehicle frame (X forward, Y left, Z up) and learned gravity norm";
+CM_ BO_ 1647 "Optional (fusion enabled): bias-corrected angular rate in the vehicle frame (yaw positive for left turns) and yaw 1-sigma";
+CM_ BO_ 1648 "Optional (fusion enabled): receiver mounting roll/pitch/yaw, accelerometer gain and cornering-axis error (255 = not enough turns yet)";
+CM_ SG_ 1647 RBX_fus_yaw_sigma_deg "655.35 = unknown";
+CM_ SG_ 1648 RBX_fus_accel_gain "0 = unknown";
 BA_DEF_ BO_  "GenMsgCycleTime" INT 2 10000;
 BA_DEF_ BO_  "GenMsgSendType" ENUM  "Cyclic","SendOnRequest","CyclicIfActive","SendOnRequestWithDelay","CyclicAndSendOnRequest","CyclicAndSendOnRequestWithDelay","IfActive","NoMsgSendType";
 BA_DEF_ SG_  "GenSigStartValue" FLOAT 0 100000000000;
@@ -352,6 +404,11 @@ BA_ "GenMsgCycleTime" BO_ 1640 40;
 BA_ "GenMsgCycleTime" BO_ 1641 40;
 BA_ "GenMsgCycleTime" BO_ 1642 40;
 BA_ "GenMsgCycleTime" BO_ 1643 40;
+BA_ "GenMsgCycleTime" BO_ 1644 200;
+BA_ "GenMsgCycleTime" BO_ 1645 40;
+BA_ "GenMsgCycleTime" BO_ 1646 40;
+BA_ "GenMsgCycleTime" BO_ 1647 40;
+BA_ "GenMsgCycleTime" BO_ 1648 200;
 BA_ "GenSigStartValue" SG_ 290 XDB_light_brightness 10;
 BA_ "GenSigStartValue" SG_ 290 XDB_dark_brightness 10;
 BA_ "GenSigStartValue" SG_ 289 XDB_light_brightness 10;
@@ -399,6 +456,8 @@ VAL_ 1638 RBX_fix_ST 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
 VAL_ 1638 RBX_valid_fix 0 "Invalid" 1 "Valid" ;
 VAL_ 1638 RBX_valid_heading 0 "Invalid" 1 "Valid" ;
 VAL_ 1641 RBX_charging_ST 0 "Discharging" 1 "Charging" ;
+VAL_ 1644 RBX_fus_state_ST 0 "Unaligned" 1 "LevelCoarse" 2 "Leveled" 3 "Aligned" 4 "Degraded" ;
+VAL_ 1644 RBX_fus_level_source_ST 0 "None" 1 "Cruise" 2 "Standstill" 3 "Blend" ;
 SIG_VALTYPE_ 773 DBG_fuel_raw_v : 1;
 SIG_VALTYPE_ 771 DBG_3V3_raw_v : 1;
 SIG_VALTYPE_ 771 DBG_12V_raw_v : 1;

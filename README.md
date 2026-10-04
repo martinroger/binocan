@@ -83,7 +83,7 @@ The Binocan protocol defines communications for core cluster telemetry, telltale
 | **`LDB_board_version`** | `0x131` | 1000 ms (1 Hz) | Left Display Board firmware version |
 | **`RDB_board_version`** | `0x132` | 1000 ms (1 Hz) | Right Display Board firmware version |
 
-Additional message groups include **External Metrics** (`0x200`–`0x201`), **Diagnostic Debug** (`0x300`–`0x305`), **RaceBox Telemetry** (`0x666`–`0x66B`), and **UDS Diagnostics** (`0x780`–`0x787`). For full architectural details, signal specifications, and diagrams, see [TOO.MD](TOO.MD).
+Additional message groups include **External Metrics** (`0x200`–`0x201`), **Diagnostic Debug** (`0x300`–`0x305`), **RaceBox Telemetry** (`0x666`–`0x66B`, plus optional fusion frames `0x66C`–`0x670`), and **UDS Diagnostics** (`0x780`–`0x787`). For full architectural details, signal specifications, and diagrams, see [TOO.MD](TOO.MD).
 
 ---
 

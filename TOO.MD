@@ -25,7 +25,7 @@ graph TD
     ITF -->|0x130: ITF_board_version<br/>0x300-0x305: DBG_ITF_*| DIAG
     LDB -->|0x131: LDB_board_version| DIAG
     RDB -->|0x132: RDB_board_version| DIAG
-    RBX -->|0x666-0x66B: RBX_*| DIAG
+    RBX -->|0x666-0x66B: RBX_*<br/>0x66C-0x670: RBX_FUS_*| DIAG
 
     DIAG <-->|0x780/0x781: ITF_UDS| ITF
     DIAG <-->|0x782/0x783: LDB_UDS| LDB
@@ -82,6 +82,13 @@ All cycle times and send types conform strictly to [`binocan.dbc`](binocan.dbc).
 | **`RBX_IMU_ACCEL`** | `0x669` | 1641 | RBX | 40 ms (25 Hz) | Cyclic | 3-axis accelerometer (`RBX_accel_X/Y/Z_g`), battery %, charging status, rolling counter |
 | **`RBX_IMU_GYRO`** | `0x66A` | 1642 | RBX | 40 ms (25 Hz) | Cyclic | 3-axis gyroscope rotation rates (`RBX_rot_rate_X/Y/Z` in deg/s) |
 | **`RBX_UTC_TIME`** | `0x66B` | 1643 | RBX | 40 ms (25 Hz) | Cyclic | GPS UTC date (year, month, day) and time (hour, minute, second, centisecond) |
+| **`RBX_FUS_STATE`** | `0x66C` | 1644 | RBX | 200 ms (5 Hz) | Cyclic | Fusion alignment state (`RBX_fus_state_ST`), leveling source, validity flags, confidences (`RBX_fus_*_confidence_pc`), rolling counter shared with `RBX_IMU_ACCEL` |
+| **`RBX_FUS_KINEMATICS`** | `0x66D` | 1645 | RBX | 40 ms (25 Hz) | Cyclic | Filtered speed (`RBX_fus_speed_kph`), heading of motion, heading rate (clockwise positive), GNSS longitudinal acceleration |
+| **`RBX_FUS_ACCEL_VEH`** | `0x66E` | 1646 | RBX | 40 ms (25 Hz) | Cyclic | Vehicle-frame specific force (`RBX_fus_accel_X/Y/Z_g`, X forward, Y left, Z up) and learned gravity norm |
+| **`RBX_FUS_GYRO_VEH`** | `0x66F` | 1647 | RBX | 40 ms (25 Hz) | Cyclic | Bias-corrected vehicle-frame rates (`RBX_fus_rot_rate_X/Y/Z`, yaw positive left) and yaw 1-sigma (655.35 = unknown) |
+| **`RBX_FUS_MOUNT`** | `0x670` | 1648 | RBX | 200 ms (5 Hz) | Cyclic | Mounting roll/pitch/yaw (`RBX_fus_mount_*_deg`), accelerometer gain (0 = unknown), cornering-axis error (255 = not enough turns) |
+
+The `RBX_FUS_*` frames are optional: the RaceBox companion only transmits them when its fusion stage is enabled. Periodicities above are the companion's Kconfig defaults and can be changed or disabled per message. The canonical source for the companion frames is mirrored in [`racebox_companion.dbc`](racebox_companion.dbc), which uses the `RB_*` naming of the RaceBoxCompanion project; [`binocan.dbc`](binocan.dbc) carries the same layouts with `RBX_*` names.
 
 ### 2.5 UDS Diagnostics (ISO 14229 / ISO 15765-2)
 
