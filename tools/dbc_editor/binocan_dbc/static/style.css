@@ -162,3 +162,9 @@ select { background: var(--panel); border: 1px solid var(--line); border-radius:
 .bitgrid td.ghost { outline: 2px dashed var(--accent); outline-offset: -2px; }
 .bitgrid td.ghost-bad { outline: 2px dashed var(--error); outline-offset: -2px; }
 .bitgrid .rz { position: absolute; top: 0; right: 0; bottom: 0; width: 8px; cursor: ew-resize; background: rgba(0,0,0,.28); border-radius: 0 4px 4px 0; }
+
+.pill { border-radius: 9px; padding: 1px 8px; font-size: 12px; background: var(--cell-empty); }
+.pill.new { background: var(--ok); color: #fff; }
+.pill.differs { background: var(--warning); color: #fff; }
+.pill.clash { background: var(--error); color: #fff; }
+.merge-table td { vertical-align: top; }

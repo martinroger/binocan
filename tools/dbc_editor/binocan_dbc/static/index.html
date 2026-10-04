@@ -14,6 +14,7 @@
     <button data-tab="messages" class="active">Messages</button>
     <button data-tab="nodes">Nodes</button>
     <button data-tab="tables">Value tables</button>
+    <button data-tab="merge">Merge</button>
     <button data-tab="busload">Busload</button>
     <button data-tab="check">Check <span id="check-badge" class="badge" hidden></span></button>
   </nav>
@@ -49,6 +50,16 @@
   <section id="tab-tables" class="tab">
     <div class="msg-head"><h2>Global value tables</h2><span class="spacer"></span><button id="table-add">New table</button></div>
     <div id="value-tables"></div>
+  </section>
+
+  <section id="tab-merge" class="tab">
+    <h2>Merge another DBC</h2>
+    <p class="muted">Bring messages, nodes and value tables from another DBC into this one. Pick a file next to this DBC or choose one from your computer, review what differs, then merge. The merge is one undoable edit and nothing is written until you save.</p>
+    <div class="busload-controls">
+      <label>File next to this DBC <select id="merge-file"><option value="">choose…</option></select></label>
+      <label>or from your computer <input id="merge-upload" type="file" accept=".dbc"></label>
+    </div>
+    <div id="merge-review"></div>
   </section>
 
   <section id="tab-busload" class="tab">

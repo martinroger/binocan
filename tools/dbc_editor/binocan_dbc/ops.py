@@ -642,6 +642,14 @@ OPS: Dict[str, Callable[[Database, Dict[str, Any]], Tuple[Optional[dict], Option
 }
 
 
+def _merge_apply(db: Database, op: Dict[str, Any]):
+    from . import merge   # merge builds on this module, so import it late
+    return merge.apply(db, merge.parse(op.get("text")), op.get("plan"))
+
+
+OPS["merge.apply"] = _merge_apply
+
+
 def apply_op(db: Database, op: Dict[str, Any]) -> Tuple[Optional[dict], Optional[Callable]]:
     """Mutates ``db`` according to ``op``. Returns (selection hint, persistence check)."""
     if not isinstance(op, dict) or op.get("op") not in OPS:

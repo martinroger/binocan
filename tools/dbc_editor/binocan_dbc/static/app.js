@@ -485,6 +485,102 @@ async function loadDeps() {
   } catch (e) { /* offline is fine */ }
 }
 
+// ---------- merge ----------
+const mergeState = { source: null, analysis: null };   // source: { file } or { text }
+
+async function loadMergeFiles() {
+  const files = await api('/api/merge/files');
+  const sel = $('#merge-file');
+  sel.innerHTML = '<option value="">choose…</option>' + files.map((f) => `<option>${esc(f.name)}</option>`).join('');
+}
+
+async function analyseMerge(source, label) {
+  try {
+    mergeState.source = source;
+    mergeState.analysis = await post('/api/merge/preview', source);
+    mergeState.label = label;
+    banner('');
+    renderMerge();
+  } catch (e) {
+    mergeState.analysis = null;
+    $('#merge-review').innerHTML = '';
+    banner(e.message, 'error');
+  }
+}
+
+const statusText = { new: 'new', identical: 'identical', differs: 'differs', clash: 'clash', existing: 'already here' };
+
+function renderMerge() {
+  const a = mergeState.analysis;
+  const box = $('#merge-review');
+  if (!a) { box.innerHTML = ''; return; }
+  const sum = a.summary;
+  const actionSel = (kind, name, sug, status) => `<select data-kind="${kind}" data-name="${esc(name)}">
+      ${['skip', 'add', 'replace'].map((v) => `<option value="${v}" ${v === sug ? 'selected' : ''}>${v}</option>`).join('')}</select>`;
+  box.innerHTML = `
+    <p><b>${esc(mergeState.label)}</b>: ${sum.new} new, ${sum.identical} identical, ${sum.differs} differ, ${sum.clash} clash.
+       Nodes the chosen messages use are added automatically.</p>
+    <div class="scroll"><table class="grid-table merge-table">
+      <tr><th>Message</th><th>ID</th><th>Status</th><th>Details</th><th>Action</th><th>New ID (hex)</th><th>New name</th></tr>
+      ${a.messages.map((m) => `<tr class="merge-${m.status}" data-msg="${esc(m.name)}">
+        <td><b>${esc(m.name)}</b><br><span class="muted">${m.signal_count} signals · ${m.length} bytes</span></td>
+        <td class="mono">${esc(m.hex_id)}</td>
+        <td><span class="pill ${m.status}">${statusText[m.status]}</span></td>
+        <td class="choices">${[...m.clashes.filter(() => m.status === 'clash'), ...m.changes].map(esc).join('<br>')}
+          ${m.dropped_attributes.length ? '<br>Attributes not copied: ' + esc(m.dropped_attributes.join(', ')) : ''}</td>
+        <td>${actionSel('msg', m.name, m.suggested.action, m.status)}</td>
+        <td><input type="text" class="w-num mono" data-f="new_id" placeholder="${m.free_id !== undefined ? m.free_id.toString(16).toUpperCase() : ''}"></td>
+        <td><input type="text" class="w-name" data-f="new_name"></td></tr>`).join('') || '<tr><td colspan="7" class="muted">No messages in that file.</td></tr>'}
+    </table></div>
+    ${a.tables.length ? `<h3>Value tables</h3><div class="scroll"><table class="grid-table merge-table">
+      <tr><th>Table</th><th>Status</th><th>Action</th><th>New name</th></tr>
+      ${a.tables.map((t) => `<tr data-table="${esc(t.name)}"><td><b>${esc(t.name)}</b></td>
+        <td><span class="pill ${t.status}">${statusText[t.status]}</span></td>
+        <td>${actionSel('table', t.name, t.suggested.action, t.status)}</td>
+        <td><input type="text" class="w-name" data-f="new_name"></td></tr>`).join('')}</table></div>` : ''}
+    ${a.nodes.length ? `<p class="muted">Nodes in that file: ${a.nodes.map((n) => esc(n.name) + (n.status === 'new' ? ' (new)' : '')).join(', ')}</p>` : ''}
+    <p><button id="merge-go" class="primary">Merge selected</button>
+       <button id="merge-all-new">Select all new</button></p>`;
+  $('#merge-all-new').onclick = () => {
+    a.messages.forEach((m) => { const s = box.querySelector(`tr[data-msg="${CSS.escape(m.name)}"] select`); if (s && m.status === 'new') s.value = 'add'; });
+    a.tables.forEach((t) => { const s = box.querySelector(`tr[data-table="${CSS.escape(t.name)}"] select`); if (s && t.status === 'new') s.value = 'add'; });
+  };
+  $('#merge-go').onclick = async () => {
+    const plan = { messages: {}, tables: {} };
+    box.querySelectorAll('tr[data-msg]').forEach((row) => {
+      const action = row.querySelector('select').value;
+      if (action === 'skip') return;
+      const entry = { action };
+      const id = row.querySelector('[data-f=new_id]').value.trim();
+      const name = row.querySelector('[data-f=new_name]').value.trim();
+      if (id) entry.new_id = parseInt(id, 16);
+      if (name) entry.new_name = name;
+      plan.messages[row.dataset.msg] = entry;
+    });
+    box.querySelectorAll('tr[data-table]').forEach((row) => {
+      const action = row.querySelector('select').value;
+      if (action === 'skip') return;
+      const entry = { action };
+      const name = row.querySelector('[data-f=new_name]').value.trim();
+      if (name) entry.new_name = name;
+      plan.tables[row.dataset.table] = entry;
+    });
+    if (await doOp({ op: 'merge.apply', ...mergeState.source, plan })) {
+      banner(`Merged from ${mergeState.label}. Review it, then Save.`, 'ok');
+      mergeState.analysis = null; box.innerHTML = '';
+    }
+  };
+}
+
+$('#merge-file').onchange = (e) => { if (e.target.value) analyseMerge({ file: e.target.value }, e.target.value); };
+$('#merge-upload').onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  // DBC files are Windows-1252, which is not what FileReader.readAsText assumes
+  const text = new TextDecoder('windows-1252').decode(await f.arrayBuffer());
+  analyseMerge({ text }, f.name);
+};
+
 // ---------- history, save ----------
 function renderStatus() {
   const st = state.db.status;
@@ -593,5 +689,6 @@ if (!TOKEN) {
     try { tab = localStorage.getItem('binocan-dbc-tab'); } catch (e) { /* storage blocked */ }
     if (tab && document.getElementById('tab-' + tab)) showTab(tab);
     loadDeps();
+    loadMergeFiles().catch(() => {});
   }).catch((e) => banner('Could not load the DBC: ' + e.message, 'error'));
 }
