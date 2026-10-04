@@ -76,6 +76,50 @@ BO_ 1643 RB_UTC_TIME: 8 RaceBoxCompanion
  SG_ UTC_Second : 48|8@1+ (1,0) [0|59] "s" Vector__XXX
  SG_ UTC_Centisecond : 56|8@1+ (0.01,0) [0|0.99] "s" Vector__XXX
 
+BO_ 1644 RB_FUS_STATE: 8 RaceBoxCompanion
+ SG_ FusState : 0|3@1+ (1,0) [0|4] "" Vector__XXX
+ SG_ FusLevelSource : 3|2@1+ (1,0) [0|3] "" Vector__XXX
+ SG_ FusYawResolved : 5|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusStationary : 6|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusGnssOk : 7|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusSpeedValid : 8|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusHeadingOk : 9|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusYawLongValid : 10|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusYawLatValid : 11|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusStandstillValid : 12|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusCruiseValid : 13|1@1+ (1,0) [0|1] "" Vector__XXX
+ SG_ FusConfidence : 16|8@1+ (1,0) [0|100] "%" Vector__XXX
+ SG_ FusLevelConfidence : 24|8@1+ (1,0) [0|100] "%" Vector__XXX
+ SG_ FusYawConfidence : 32|8@1+ (1,0) [0|100] "%" Vector__XXX
+ SG_ FusInputScore : 40|8@1+ (1,0) [0|100] "%" Vector__XXX
+ SG_ FusStopsCount : 48|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ FusLevelOutliers : 52|4@1+ (1,0) [0|15] "" Vector__XXX
+ SG_ FusRollingCounter : 56|8@1+ (1,0) [0|255] "" Vector__XXX
+
+BO_ 1645 RB_FUS_KINEMATICS: 8 RaceBoxCompanion
+ SG_ FusSpeed : 0|16@1+ (0.01,0) [0|655.35] "km/h" Vector__XXX
+ SG_ FusHeading : 16|16@1+ (0.01,0) [0|655.35] "deg" Vector__XXX
+ SG_ FusHeadingRate : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ FusAccelGnssLong : 48|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+
+BO_ 1646 RB_FUS_ACCEL_VEH: 8 RaceBoxCompanion
+ SG_ FusAccelVehX : 0|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ FusAccelVehY : 16|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ FusAccelVehZ : 32|16@1- (0.001,0) [-32.768|32.767] "g" Vector__XXX
+ SG_ FusGravity : 48|16@1+ (0.001,0) [0|65.535] "g" Vector__XXX
+
+BO_ 1647 RB_FUS_GYRO_VEH: 8 RaceBoxCompanion
+ SG_ FusGyroVehX : 0|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ FusGyroVehY : 16|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ FusGyroVehZ : 32|16@1- (0.01,0) [-327.68|327.67] "deg/s" Vector__XXX
+ SG_ FusYawSigma : 48|16@1+ (0.01,0) [0|655.35] "deg" Vector__XXX
+
+BO_ 1648 RB_FUS_MOUNT: 8 RaceBoxCompanion
+ SG_ FusMountRoll : 0|16@1- (0.01,0) [-327.68|327.67] "deg" Vector__XXX
+ SG_ FusMountPitch : 16|16@1- (0.01,0) [-327.68|327.67] "deg" Vector__XXX
+ SG_ FusMountYaw : 32|16@1- (0.01,0) [-327.68|327.67] "deg" Vector__XXX
+ SG_ FusAccelGain : 48|8@1+ (0.01,0) [0|2.55] "" Vector__XXX
+ SG_ FusTurnAxisError : 56|8@1+ (1,0) [0|255] "deg" Vector__XXX
 
 
 CM_ BO_ 1638 "RaceBox GPS Speed, Course Heading, Fix Quality, and Satellites in view";
@@ -88,4 +132,12 @@ VAL_ 1638 FixStatus 0 "NoFix" 2 "2D_Fix" 3 "3D_Fix" ;
 VAL_ 1638 ValidFix 0 "Invalid" 1 "Valid" ;
 VAL_ 1638 ValidHeading 0 "Invalid" 1 "Valid" ;
 VAL_ 1641 IsCharging 0 "Discharging" 1 "Charging" ;
-
+CM_ BO_ 1644 "Optional (fusion enabled): alignment state machine, validity flags, plausibility scores, rolling counter shared with RB_IMU_ACCEL";
+CM_ BO_ 1645 "Optional (fusion enabled): filtered speed, heading of motion, heading rate (clockwise positive) and GNSS-derived longitudinal acceleration";
+CM_ BO_ 1646 "Optional (fusion enabled): specific force in the vehicle frame (X forward, Y left, Z up) and learned gravity norm";
+CM_ BO_ 1647 "Optional (fusion enabled): bias-corrected angular rate in the vehicle frame (yaw positive for left turns) and yaw 1-sigma";
+CM_ BO_ 1648 "Optional (fusion enabled): receiver mounting roll/pitch/yaw, accelerometer gain and cornering-axis error (255 = not enough turns yet)";
+CM_ SG_ 1647 FusYawSigma "655.35 = unknown";
+CM_ SG_ 1648 FusAccelGain "0 = unknown";
+VAL_ 1644 FusState 0 "Unaligned" 1 "LevelCoarse" 2 "Leveled" 3 "Aligned" 4 "Degraded" ;
+VAL_ 1644 FusLevelSource 0 "None" 1 "Cruise" 2 "Standstill" 3 "Blend" ;
