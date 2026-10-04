@@ -66,11 +66,13 @@ def load(path: Path) -> Tuple[Database, str]:
     return db, text
 
 
-def _dropped_lines(original: str, dumped: str) -> List[Tuple[str, str]]:
+def _dropped_lines(original: str, dumped: str, known: Optional[set] = None) -> List[Tuple[str, str]]:
     """Attribute lines from ``original`` that cantools did not write back.
 
     Only definitions, their defaults and network-level values are restored.
     Per-object values follow the model, so a deleted message stays deleted.
+    When ``known`` (the attribute names the model still defines) is given, lines
+    for other names are not restored, so a deleted attribute stays deleted.
     """
     def keys(text: str) -> Dict[str, set]:
         out = {"def": set(), "defdef": set(), "net": set()}
@@ -89,19 +91,23 @@ def _dropped_lines(original: str, dumped: str) -> List[Tuple[str, str]]:
         return out
 
     have = keys(dumped)
+    alive = (lambda name: True) if known is None else (lambda name: name in known)
     missing = []
     for line in original.splitlines():
         m = _ATTR_DEF_RE.match(line)
         if m and (m.group(1) or "", m.group(2)) not in have["def"]:
-            missing.append(("def", line))
+            if alive(m.group(2)):
+                missing.append(("def", line))
             continue
         m = _ATTR_DEF_DEF_RE.match(line)
         if m and m.group(1) not in have["defdef"]:
-            missing.append(("defdef", line))
+            if alive(m.group(1)):
+                missing.append(("defdef", line))
             continue
         m = _ATTR_NET_RE.match(line)
         if m and m.group(1) not in have["net"]:
-            missing.append(("net", line))
+            if alive(m.group(1)):
+                missing.append(("net", line))
     return missing
 
 
@@ -138,7 +144,8 @@ def dumps(db: Database, original: Optional[str] = None) -> str:
     text = db.as_dbc_string()
     if not original:
         return text
-    missing = _dropped_lines(original, text)
+    known = set(db.dbc.attribute_definitions) if db.dbc is not None else None
+    missing = _dropped_lines(original, text, known)
     if not missing:
         return text
     lines = text.splitlines()

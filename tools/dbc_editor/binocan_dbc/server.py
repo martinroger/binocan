@@ -114,6 +114,11 @@ def make_handler(session: Session):
         def _api_post(self, path: str, body: Dict[str, Any]):
             if path == "/api/merge/preview":
                 return self._json(session.merge_preview(self._merge_text(body)))
+            if path == "/api/compare":
+                if body.get("against") == "saved":
+                    # what a save would change: the saved file compared with the working copy
+                    return self._json(session.compare_with(session.current()[1], "saved"))
+                return self._json(session.compare_with(self._merge_text(body)))
             if path == "/api/op":
                 op = body.get("op")
                 if isinstance(op, dict) and op.get("op") == "merge.apply":

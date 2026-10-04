@@ -15,6 +15,8 @@
     <button data-tab="nodes">Nodes</button>
     <button data-tab="tables">Value tables</button>
     <button data-tab="merge">Merge</button>
+    <button data-tab="compare">Compare</button>
+    <button data-tab="attributes">Attributes</button>
     <button data-tab="busload">Busload</button>
     <button data-tab="check">Check <span id="check-badge" class="badge" hidden></span></button>
   </nav>
@@ -60,6 +62,24 @@
       <label>or from your computer <input id="merge-upload" type="file" accept=".dbc"></label>
     </div>
     <div id="merge-review"></div>
+  </section>
+
+  <section id="tab-compare" class="tab">
+    <h2>Compare</h2>
+    <p class="muted">See how this DBC differs from another one, or what saving would change. Nothing is modified.</p>
+    <div class="busload-controls">
+      <button id="compare-saved">Unsaved changes vs saved file</button>
+      <label>Another file next to this DBC <select id="compare-file"><option value="">choose…</option></select></label>
+      <label>or from your computer <input id="compare-upload" type="file" accept=".dbc"></label>
+    </div>
+    <div id="compare-result"></div>
+  </section>
+
+  <section id="tab-attributes" class="tab">
+    <h2>Attributes</h2>
+    <p class="muted">User attributes of the network, nodes, messages and signals. Cycle time, send type and start value are edited in the Messages tab.</p>
+    <div id="attr-defs"></div>
+    <div id="attr-values"></div>
   </section>
 
   <section id="tab-busload" class="tab">

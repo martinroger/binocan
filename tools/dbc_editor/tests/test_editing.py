@@ -242,3 +242,100 @@ class MergeTests(SessionCase):
         for bad in ("../README.md", "README.md", "binocan.dbc", "nope.dbc"):
             with self.subTest(name=bad), self.assertRaises(ops.OpError):
                 self.session.read_sibling(bad)
+
+
+class MultiplexingTests(SessionCase):
+    def setUp(self):
+        super().setUp()
+        self.session.apply({"op": "signal.add", "frame_id": SLOW, "name": "selector", "start": 56, "length": 2})
+
+    def set(self, name, field, value):
+        return self.session.apply({"op": "signal.set", "frame_id": SLOW, "name": name,
+                                   "field": field, "value": value})
+
+    def test_multiplex_a_signal(self):
+        self.set("selector", "is_multiplexer", True)
+        self.set("ITF_lv_voltage_v", "multiplexer_ids", [1, 0, 1])
+        s = self.sig("ITF_lv_voltage_v")
+        self.assertEqual((s.multiplexer_ids, s.multiplexer_signal), ([0, 1], "selector"))
+        self.assertIn(" SG_ selector M :", self.session.text)
+        self.assertIn(" SG_ ITF_lv_voltage_v m0 :", self.session.text)
+        self.assertIn("SG_MUL_VAL_ 272 ITF_lv_voltage_v selector 0-1;", self.session.text)
+        self.assertTrue(self.sig("selector").is_multiplexer)
+
+    def test_refusals(self):
+        with self.assertRaises(ops.OpError):                      # no multiplexer yet
+            self.set("ITF_lv_voltage_v", "multiplexer_ids", [0])
+        self.set("selector", "is_multiplexer", True)
+        with self.assertRaises(ops.OpError):                      # 2 bits hold values 0..3
+            self.set("ITF_lv_voltage_v", "multiplexer_ids", [4])
+        with self.assertRaises(ops.OpError):                      # one multiplexer per message
+            self.set("ITF_coolant_temp", "is_multiplexer", True)
+        self.set("ITF_lv_voltage_v", "multiplexer_ids", [0])
+        with self.assertRaises(ops.OpError):                      # it still carries a signal
+            self.set("selector", "is_multiplexer", False)
+
+    def test_take_out_of_multiplexing(self):
+        self.set("selector", "is_multiplexer", True)
+        self.set("ITF_lv_voltage_v", "multiplexer_ids", [2])
+        self.set("ITF_lv_voltage_v", "multiplexer_ids", None)
+        self.assertFalse(self.sig("ITF_lv_voltage_v").multiplexer_ids)
+        self.set("selector", "is_multiplexer", False)
+        self.assertFalse(self.sig("selector").is_multiplexer)
+
+
+class AttributeTests(SessionCase):
+    def test_define_set_and_delete(self):
+        define = lambda **kw: self.session.apply({"op": "attribute.define", **kw})
+        define(scope="message", name="MyNote", type="STRING")
+        define(scope="signal", name="MyKind", type="ENUM", choices=["A", "B"], default="B")
+        define(scope="node", name="NodeId", type="INT", minimum=0, maximum=255, default=1)
+        define(scope="network", name="NetName", type="STRING")
+        apply = lambda **kw: self.session.apply({"op": "attribute.set", **kw})
+        apply(name="MyNote", frame_id=SLOW, value="hello")
+        apply(name="MyKind", frame_id=SLOW, signal="ITF_lv_voltage_v", value="A")
+        apply(name="NodeId", node="ITF", value=7)
+        apply(name="NetName", value="main")
+        saved = Session(self.tmp / "binocan.dbc", self.tmp / "src", doc_paths=[])   # untouched on disk
+        self.assertNotIn("MyNote", saved.db.dbc.attribute_definitions)
+        self.session.save(sync_docs=False)
+        again = Session(self.tmp / "binocan.dbc", self.tmp / "src", doc_paths=[])
+        values = {(v["scope"], v["name"]): v["value"]
+                  for v in __import__("binocan_dbc.jsonmodel", fromlist=["x"]).attributes_json(again.db)["values"]}
+        self.assertEqual(values[("message", "MyNote")], "hello")
+        self.assertEqual(values[("signal", "MyKind")], "A")
+        self.assertEqual(values[("node", "NodeId")], 7)
+        self.assertEqual(values[("network", "NetName")], "main")
+        self.session.apply({"op": "attribute.delete", "name": "MyNote"})
+        self.assertNotIn("MyNote", self.session.db.dbc.attribute_definitions)
+        self.assertNotIn("MyNote", self.session.text)
+
+    def test_refusals(self):
+        self.session.apply({"op": "attribute.define", "scope": "node", "name": "NodeId", "type": "INT",
+                            "minimum": 0, "maximum": 255})
+        for op in [{"op": "attribute.set", "name": "NodeId", "node": "ITF", "value": 300},
+                   {"op": "attribute.set", "name": "NodeId", "node": "NOPE", "value": 1},
+                   {"op": "attribute.set", "name": "GenMsgCycleTime", "frame_id": SLOW, "value": 5},
+                   {"op": "attribute.delete", "name": "GenMsgSendType"},
+                   {"op": "attribute.define", "scope": "node", "name": "NodeId", "type": "INT"},
+                   {"op": "attribute.define", "scope": "message", "name": "Bad", "type": "ENUM", "choices": []},
+                   {"op": "attribute.set", "name": "Nothing", "value": 1}]:
+            with self.subTest(op=op), self.assertRaises(ops.OpError):
+                self.session.apply(op)
+
+
+class CompareTests(SessionCase):
+    def test_unsaved_changes_against_saved_file(self):
+        self.assertTrue(self.session.compare_with(self.session.text, "saved")["same"])
+        self.session.apply({"op": "message.set", "frame_id": SLOW, "field": "cycle_time", "value": 400})
+        self.session.apply({"op": "node.add", "name": "TST"})
+        r = self.session.compare_with(self.session.current()[1], "saved")
+        self.assertFalse(r["same"])
+        self.assertEqual(r["messages_changed"][0]["changes"], ["cycle time: 500 -> 400"])
+        self.assertEqual(r["nodes_only_there"], ["TST"])
+
+    def test_against_another_file(self):
+        other = Session(self.tmp / "binocan.dbc", self.tmp / "src", doc_paths=[])
+        other.apply({"op": "message.delete", "frame_id": SLOW})
+        r = self.session.compare_with(other.text)
+        self.assertEqual([m["name"] for m in r["messages_only_here"]], ["ITF_slow_metrics"])

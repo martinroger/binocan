@@ -396,9 +396,52 @@ def _signal_set(db: Database, op: Dict[str, Any]):
         v = _num(value, "Start value", allow_none=True)
         sig.raw_initial = v
         check = lambda d: getter(d).raw_initial == v
+    elif field == "is_multiplexer":
+        v = _bool(value, "Multiplexer")
+        if v:
+            other = next((x for x in msg.signals if x.is_multiplexer and x is not sig), None)
+            if other is not None:
+                raise OpError(f"{msg.name} already has a multiplexer signal ({other.name}); "
+                              f"a DBC message can have only one")
+            if sig.multiplexer_ids:
+                raise OpError(f"{name} is multiplexed; take it out of multiplexing first")
+        else:
+            users = [x.name for x in msg.signals if x.multiplexer_signal == name]
+            if users:
+                raise OpError(f"{', '.join(users)} depend on {name}; make them plain signals first")
+        sig.is_multiplexer = v
+        check = lambda d: getter(d).is_multiplexer == v
+    elif field == "multiplexer_ids":
+        ids = _mux_ids(msg, sig, value)
+        if ids:
+            mux = next(x for x in msg.signals if x.is_multiplexer)
+            sig.multiplexer_ids = ids
+            sig.multiplexer_signal = mux.name
+            check = lambda d: list(getter(d).multiplexer_ids or []) == ids \
+                and getter(d).multiplexer_signal == mux.name
+        else:
+            sig.multiplexer_ids = None
+            sig.multiplexer_signal = None
+            check = lambda d: not getter(d).multiplexer_ids
     else:
         raise OpError(f"Unknown signal field {field!r}")
     return select, check
+
+
+def _mux_ids(msg: Message, sig: Signal, value: Any) -> List[int]:
+    """Validated multiplexer values for a signal, or [] to take it out of multiplexing."""
+    if value in (None, "", []):
+        return []
+    if not isinstance(value, list):
+        raise OpError("Multiplexer values must be a list of whole numbers")
+    mux = next((x for x in msg.signals if x.is_multiplexer), None)
+    if mux is None:
+        raise OpError(f"{msg.name} has no multiplexer signal; mark one first")
+    if sig is mux:
+        raise OpError("The multiplexer signal cannot be multiplexed itself")
+    top = 2 ** mux.length - 1
+    ids = sorted({_int(v, "Multiplexer value", 0, top) for v in value})
+    return ids
 
 
 def _set_float(sig: Signal, is_float: bool) -> None:
@@ -618,6 +661,163 @@ def _table_delete(db: Database, op: Dict[str, Any]):
     return None, lambda d: name not in d.dbc.value_tables
 
 
+# ---------- attributes ----------
+
+MANAGED_ATTRIBUTES = ("GenMsgCycleTime", "GenMsgSendType", "GenSigStartValue", "Baudrate")
+ATTRIBUTE_KINDS = {"network": None, "node": "BU_", "message": "BO_", "signal": "SG_"}
+ATTRIBUTE_TYPES = ("INT", "HEX", "FLOAT", "STRING", "ENUM")
+
+
+def _definitions(db: Database):
+    if db.dbc is None:
+        raise OpError("This database has no DBC specifics")
+    return db.dbc.attribute_definitions
+
+
+def _definition(db: Database, name: Any, allow_managed: bool = False):
+    defs = _definitions(db)
+    if name not in defs:
+        raise OpError(f"No attribute called {name}")
+    if name in MANAGED_ATTRIBUTES and not allow_managed:
+        raise OpError(f"{name} is edited through the message and signal fields, not here")
+    return defs[name]
+
+
+def _attribute_value(defn, value: Any, what: str):
+    """Value as cantools stores it: numbers, text, or the index of an enum choice."""
+    t = defn.type_name
+    if t == "STRING":
+        return _text(value, what)
+    if t == "ENUM":
+        if value not in defn.choices:
+            raise OpError(f"{what}: {value!r} is not one of {', '.join(defn.choices)}")
+        return defn.choices.index(value)
+    if t in ("INT", "HEX"):
+        v = _int(value, what)
+    else:
+        v = _num(value, what)
+    if defn.minimum is not None and v < defn.minimum or defn.maximum is not None and v > defn.maximum:
+        raise OpError(f"{what} must be between {defn.minimum} and {defn.maximum}")
+    return v
+
+
+def _default_value(defn, value: Any):
+    """Default as cantools keeps it: for ENUM the choice text, otherwise the plain value."""
+    if defn.type_name == "ENUM":
+        if value not in defn.choices:
+            raise OpError(f"Default {value!r} is not one of {', '.join(defn.choices)}")
+        return value
+    return _attribute_value(defn, value, "Default")
+
+
+def _attribute_define(db: Database, op: Dict[str, Any]):
+    from cantools.database.can.formats.dbc import DbcAttributeDefinition
+    name = _name(op.get("name"), "Attribute name")
+    defs = _definitions(db)
+    if name in defs:
+        raise OpError(f"An attribute called {name} already exists")
+    scope = op.get("scope")
+    if scope not in ATTRIBUTE_KINDS:
+        raise OpError("Scope must be network, node, message or signal")
+    typ = op.get("type")
+    if typ not in ATTRIBUTE_TYPES:
+        raise OpError(f"Type must be one of {', '.join(ATTRIBUTE_TYPES)}")
+    choices = None
+    lo = hi = None
+    if typ == "ENUM":
+        choices = op.get("choices")
+        if not isinstance(choices, list) or not choices or not all(
+                isinstance(c, str) and c and '"' not in c for c in choices):
+            raise OpError("An enumeration needs a list of choices (no double quotes)")
+        if len(set(choices)) != len(choices):
+            raise OpError("Enumeration choices must be different")
+    elif typ in ("INT", "HEX", "FLOAT"):
+        conv = _int if typ != "FLOAT" else _num
+        lo = conv(op.get("minimum", 0), "Minimum")
+        hi = conv(op.get("maximum", 0), "Maximum")
+        if lo > hi:
+            raise OpError("Minimum is above maximum")
+    defn = DbcAttributeDefinition(name, None, ATTRIBUTE_KINDS[scope], typ, lo, hi, choices)
+    default = op.get("default")
+    if default is None:
+        default = choices[0] if typ == "ENUM" else ("" if typ == "STRING" else (lo if lo is not None else 0))
+    defn.default_value = _default_value(defn, default)
+    defs[name] = defn
+    return None, lambda d: name in d.dbc.attribute_definitions \
+        and d.dbc.attribute_definitions[name].type_name == typ
+
+
+def _attribute_set_default(db: Database, op: Dict[str, Any]):
+    defn = _definition(db, op.get("name"))
+    value = _default_value(defn, op.get("value"))
+    defn.default_value = value
+    name = defn.name
+    return None, lambda d: d.dbc.attribute_definitions[name].default_value == value
+
+
+def _holders(db: Database, kind: Optional[str]):
+    """Every object that can carry an attribute of this kind."""
+    if kind is None:
+        return [db]
+    if kind == "BU_":
+        return list(db.nodes)
+    if kind == "BO_":
+        return list(db.messages)
+    return [s for m in db.messages for s in m.signals]
+
+
+def _attribute_delete(db: Database, op: Dict[str, Any]):
+    defn = _definition(db, op.get("name"))
+    name = defn.name
+    for holder in _holders(db, defn.kind):
+        specifics = holder.dbc
+        if specifics is not None:
+            specifics.attributes.pop(name, None)
+    del db.dbc.attribute_definitions[name]
+    return None, lambda d: name not in d.dbc.attribute_definitions
+
+
+def _attribute_holder(db: Database, defn, op: Dict[str, Any]):
+    kind = defn.kind
+    if kind is None:
+        return db
+    if kind == "BU_":
+        node = next((n for n in db.nodes if n.name == op.get("node")), None)
+        if node is None:
+            raise OpError(f"No node called {op.get('node')}")
+        return node
+    msg = _message(db, op.get("frame_id"))
+    return msg if kind == "BO_" else _signal(msg, op.get("signal"))
+
+
+def _attribute_set(db: Database, op: Dict[str, Any]):
+    defn = _definition(db, op.get("name"))
+    holder = _attribute_holder(db, defn, op)
+    if holder.dbc is None:
+        holder.dbc = _new_dbc()
+    name = defn.name
+    value = op.get("value")
+    if value is None:
+        holder.dbc.attributes.pop(name, None)
+        stored = None
+    else:
+        stored = _attribute_value(defn, value, name)
+        holder.dbc.attributes[name] = DbcAttribute(value=stored, definition=defn)
+
+    def read(d: Database):
+        if defn.kind is None:
+            target = d
+        elif defn.kind == "BU_":
+            target = next(n for n in d.nodes if n.name == op.get("node"))
+        else:
+            m = d.get_message_by_frame_id(op.get("frame_id"))
+            target = m if defn.kind == "BO_" else m.get_signal_by_name(op.get("signal"))
+        a = (target.dbc.attributes if target.dbc else {}).get(name)
+        return None if a is None else a.value
+    return {"frame_id": op["frame_id"]} if defn.kind in ("BO_", "SG_") else None, \
+        lambda d: read(d) == stored
+
+
 # ---------- registry ----------
 
 OPS: Dict[str, Callable[[Database, Dict[str, Any]], Tuple[Optional[dict], Optional[Callable]]]] = {
@@ -639,6 +839,10 @@ OPS: Dict[str, Callable[[Database, Dict[str, Any]], Tuple[Optional[dict], Option
     "table.set": _table_set,
     "table.rename": _table_rename,
     "table.delete": _table_delete,
+    "attribute.define": _attribute_define,
+    "attribute.set_default": _attribute_set_default,
+    "attribute.delete": _attribute_delete,
+    "attribute.set": _attribute_set,
 }
 
 
