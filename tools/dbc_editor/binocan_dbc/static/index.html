@@ -18,8 +18,12 @@
     <button data-tab="check">Check <span id="check-badge" class="badge" hidden></span></button>
   </nav>
   <div class="actions">
+    <span id="dirty" class="dirty" hidden>● unsaved</span>
+    <button id="undo-btn" title="Undo (Ctrl+Z)">Undo</button>
+    <button id="redo-btn" title="Redo (Ctrl+Y)">Redo</button>
+    <button id="save-btn" class="primary" title="Validate and write the DBC, then update README.md and TOO.MD (Ctrl+S)">Save</button>
     <button id="reload-btn" title="Reload the DBC from disk">Reload</button>
-    <button id="generate-btn" class="primary" title="Run cantools generate_c_source into src/">Generate C</button>
+    <button id="generate-btn" title="Run cantools generate_c_source into src/">Generate C</button>
   </div>
 </header>
 <div id="banner" class="banner" hidden></div>
@@ -28,6 +32,7 @@
   <section id="tab-messages" class="tab active">
     <aside class="sidebar">
       <input id="search" type="search" placeholder="Search messages, IDs, signals">
+      <button id="msg-add" class="wide">+ New message</button>
       <ul id="message-list"></ul>
     </aside>
     <div class="detail" id="message-detail"><p class="muted">Pick a message.</p></div>
@@ -35,14 +40,14 @@
 
   <section id="tab-nodes" class="tab">
     <h2>Node matrix</h2>
-    <p class="muted">TX: the node sends the message. RX: the node receives at least one of its signals.</p>
+    <p class="muted">Click a cell to cycle none → RX → TX. RX is set on every signal of the message; fine-tune per signal in the Messages tab.</p>
     <div class="scroll"><table id="node-matrix" class="grid-table"></table></div>
-    <h2>Nodes</h2>
+    <div class="msg-head"><h2>Nodes</h2><span class="spacer"></span><button id="node-add">Add node</button></div>
     <table id="node-list" class="grid-table"></table>
   </section>
 
   <section id="tab-tables" class="tab">
-    <h2>Global value tables</h2>
+    <div class="msg-head"><h2>Global value tables</h2><span class="spacer"></span><button id="table-add">New table</button></div>
     <div id="value-tables"></div>
   </section>
 

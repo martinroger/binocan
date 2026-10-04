@@ -38,22 +38,41 @@ Later runs find that environment on their own. `--venv` forces it even when
 the system Python could install cantools; delete `.venv` to start over.
 On Debian or Ubuntu the venv step needs `sudo apt install python3-venv` once.
 
-## Browser view
+## Browser editor
 
 `edit` starts a server on `127.0.0.1` and opens a link carrying a random
 session token; nothing else on the machine or in the browser can call it.
-The view has:
 
-- **Messages**: properties, comment, signal table and the 8 x 8 bit layout
-  grid (MSB and LSB marked, overlaps outlined, a selector for multiplexer values);
-- **Nodes**: who sends and who receives each message;
-- **Value tables**: global `VAL_TABLE_`s and the signals using them;
-- **Busload**: total and per-message load, with what-if cycle times and bitrate;
-- **Check**: the consistency issues;
-- **Generate C**: writes `src/` only when the code actually changed.
+- **Messages**: edit name, frame ID, extended flag, length, senders, send type,
+  cycle time and comment; add, duplicate or delete messages. The signal table
+  edits name, start bit, length, byte order, signed/unsigned/float, factor,
+  offset, min, max, unit, start value (raw), receivers, value choices (one
+  `value = label` per line, or "use table…") and comment. The 8 x 8 bit grid
+  marks MSB and LSB and outlines overlaps; a selector picks multiplexer values.
+- **Nodes**: click a matrix cell to cycle none, RX, TX; rename, comment, add
+  and delete nodes (deleting a node still in use asks to remove it everywhere).
+- **Value tables**: create, rename, edit and delete global tables; editing a
+  table updates the signals that use it.
+- **Busload**: live load of the working copy, with what-if cycle times and bitrate.
+- **Check**: the consistency issues, refreshed after every edit.
+- **Undo / Redo** (Ctrl+Z, Ctrl+Y), **Save** (Ctrl+S) and **Generate C**,
+  which is only offered after a save because C is generated from the saved file.
 
-Editing from the browser comes in the next milestone. The view reloads the
-file when it changes on disk, so edits made elsewhere show after **Reload**.
+Every edit is applied to a copy of the database, written out, read back and
+checked before it is accepted, so the browser always shows what a save would
+write. A change cantools cannot represent is refused with a message instead of
+being silently dropped. Problems the Check tab reports as errors (overlapping
+signals, values that do not fit, ...) block saving.
+
+### Cycle-time tables in the docs
+
+Saving also regenerates the tables in `README.md` and `TOO.MD` that sit between
+`<!-- dbc:cycle-table ids=0x100-0x1FF -->` and `<!-- /dbc:cycle-table -->`.
+Rows are the DBC messages in that ID range. Message name, ID, transmitter,
+periodicity and send type come from the DBC; other columns (such as Key
+Signals) keep their hand-written text, and a cell that already says the same in
+its own words is left alone. After a save the tool lists the generated C files
+that are now out of date and any message that no table covers.
 
 ## Busload
 
@@ -68,7 +87,7 @@ python -m binocan_dbc busload --baud 250000 -o 0x100:20 0x300:50
 
 ## Saving and fidelity
 
-Saving (used by the editor from the next milestone) goes through
+Saving goes through
 `binocan_dbc.model.save`, which:
 
 - writes signals in a fixed order so repeated saves give identical text;

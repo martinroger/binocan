@@ -41,6 +41,7 @@ All cycle times and send types conform strictly to [`binocan.dbc`](binocan.dbc).
 
 ### 2.1 Core Cluster & Operational Messages
 
+<!-- dbc:cycle-table ids=0x100-0x1FF -->
 | Message Name | CAN ID (Hex) | CAN ID (Dec) | Transmitter | Periodicity | Send Type | Key Signals |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`ITF_fast_metrics`** | `0x100` | 256 | ITF | 25 ms (40 Hz) | Cyclic | Speed (`ITF_speed_kph`), Engine RPM (`ITF_rpm`), Gear Position (`ITF_gear_position_ST`) |
@@ -53,16 +54,20 @@ All cycle times and send types conform strictly to [`binocan.dbc`](binocan.dbc).
 | **`ITF_board_version`** | `0x130` | 304 | ITF | 1000 ms (1 Hz) | Cyclic | Interface Board firmware version (major, minor, patch, dirty flag, git commit hash) |
 | **`LDB_board_version`** | `0x131` | 305 | LDB | 1000 ms (1 Hz) | Cyclic | Left Display Board firmware version (major, minor, patch, dirty flag, git commit hash) |
 | **`RDB_board_version`** | `0x132` | 306 | RDB | 1000 ms (1 Hz) | Cyclic | Right Display Board firmware version (major, minor, patch, dirty flag, git commit hash) |
+<!-- /dbc:cycle-table -->
 
 ### 2.2 Extension Controller Messages
 
+<!-- dbc:cycle-table ids=0x200-0x2FF -->
 | Message Name | CAN ID (Hex) | CAN ID (Dec) | Transmitter | Periodicity | Send Type | Key Signals |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`EXT_oil_metrics`** | `0x200` | 512 | EXT | 100 ms (10 Hz) | Cyclic | Signal validity bitmask, oil pressure (`EXT_oil_pressure`), oil temperature (`EXT_oil_temperature`) |
 | **`EXT_chargecooling_metrics`** | `0x201` | 513 | EXT | 100 ms (10 Hz) | Cyclic | Signal validity bitmask, intercooler coolant temp in (`EXT_charge_coolant_temp_in`), temp out (`EXT_charge_coolant_temp_out`) |
+<!-- /dbc:cycle-table -->
 
 ### 2.3 Interface Board Debug Messages
 
+<!-- dbc:cycle-table ids=0x300-0x3FF -->
 | Message Name | CAN ID (Hex) | CAN ID (Dec) | Transmitter | Periodicity | Send Type | Key Signals |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`DBG_ITF_speed`** | `0x300` | 768 | ITF | 25 ms (40 Hz) | Cyclic | Speed sensor pulse frequency (`DBG_speed_freq`) and duty cycle (`DBG_speed_duty`) |
@@ -71,9 +76,11 @@ All cycle times and send types conform strictly to [`binocan.dbc`](binocan.dbc).
 | **`DBG_ITF_ADC_raw`** | `0x303` | 771 | ITF | 100 ms (10 Hz) | Cyclic | Raw ADC voltages: 3.3V rail (`DBG_3V3_raw_v`), 12V rail (`DBG_12V_raw_v`) |
 | **`DBG_ITF_pulse_counts`** | `0x304` | 772 | ITF | 100 ms (10 Hz) | Cyclic | Raw accumulator pulse counts: `DBG_RPM_pulses`, `DBG_speed_pulses` |
 | **`DBG_ITF_fuel`** | `0x305` | 773 | ITF | 200 ms (5 Hz) | Cyclic | Fuel sensor voltage (`DBG_fuel_raw_v`), unfiltered level (`DBG_fuel_level_unfiltered`), sensor resistance (`DBG_fuel_r`, `DBG_fuel_full_r`) |
+<!-- /dbc:cycle-table -->
 
 ### 2.4 RaceBox Companion Telemetry
 
+<!-- dbc:cycle-table ids=0x600-0x6FF -->
 | Message Name | CAN ID (Hex) | CAN ID (Dec) | Transmitter | Periodicity | Send Type | Key Signals |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`RBX_SPEED_HEADING`** | `0x666` | 1638 | RBX | 40 ms (25 Hz) | Cyclic | GPS speed (`RBX_speed_kph`), course heading, accuracy, fix status, satellites |
@@ -87,11 +94,13 @@ All cycle times and send types conform strictly to [`binocan.dbc`](binocan.dbc).
 | **`RBX_FUS_ACCEL_VEH`** | `0x66E` | 1646 | RBX | 40 ms (25 Hz) | Cyclic | Vehicle-frame specific force (`RBX_fus_accel_X/Y/Z_g`, X forward, Y left, Z up) and learned gravity norm |
 | **`RBX_FUS_GYRO_VEH`** | `0x66F` | 1647 | RBX | 40 ms (25 Hz) | Cyclic | Bias-corrected vehicle-frame rates (`RBX_fus_rot_rate_X/Y/Z`, yaw positive left) and yaw 1-sigma (655.35 = unknown) |
 | **`RBX_FUS_MOUNT`** | `0x670` | 1648 | RBX | 200 ms (5 Hz) | Cyclic | Mounting roll/pitch/yaw (`RBX_fus_mount_*_deg`), accelerometer gain (0 = unknown), cornering-axis error (255 = not enough turns) |
+<!-- /dbc:cycle-table -->
 
 The `RBX_FUS_*` frames are optional: the RaceBox companion only transmits them when its fusion stage is enabled. Periodicities above are the companion's Kconfig defaults and can be changed or disabled per message. The canonical source for the companion frames is mirrored in [`racebox_companion.dbc`](racebox_companion.dbc), which uses the `RB_*` naming of the RaceBoxCompanion project; [`binocan.dbc`](binocan.dbc) carries the same layouts with `RBX_*` names.
 
 ### 2.5 UDS Diagnostics (ISO 14229 / ISO 15765-2)
 
+<!-- dbc:cycle-table ids=0x700-0x7FF -->
 | Message Name | CAN ID (Hex) | CAN ID (Dec) | Transmitter | Periodicity | Send Type | Key Signals |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`ITF_UDS_REQ`** | `0x780` | 1920 | Tester / External | Aperiodic | SendOnRequest | ITF UDS request payload (`ITF_uds_req`) |
@@ -102,6 +111,7 @@ The `RBX_FUS_*` frames are optional: the RaceBox companion only transmits them w
 | **`RDB_UDS_RESP`** | `0x785` | 1925 | RDB | Aperiodic | SendOnRequest | RDB UDS response payload (`RDB_uds_resp`) |
 | **`EXT_UDS_REQ`** | `0x786` | 1926 | ITF / Tester | Aperiodic | SendOnRequest | EXT UDS request payload (`EXT_uds_req`) |
 | **`EXT_UDS_RESP`** | `0x787` | 1927 | EXT | Aperiodic | SendOnRequest | EXT UDS response payload (`EXT_uds_resp`) |
+<!-- /dbc:cycle-table -->
 
 ---
 
